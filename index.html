@@ -17,90 +17,38 @@ body{
   background:#eaf1f7;
 }
 
-/* SCREEN */
-.screen{display:none;}
-.active{display:block;}
-
-/* ================= LOGIN ================= */
-.login{
-  padding:20px;
-}
-
-.logo{
-  font-size:26px;
-  color:#1d9bf0;
-  font-weight:bold;
-  margin-top:60px;
-}
-
-.user{
-  margin-top:30px;
-}
-
-.user h3{
-  font-size:18px;
-}
-
-.user p{
-  opacity:0.6;
-}
-
-.btn{
-  margin-top:40px;
-  width:100%;
-  padding:16px;
-  border-radius:30px;
-  border:none;
-  background:#0f5ea8;
-  color:white;
-  font-size:16px;
-}
-
-/* ================= PIN ================= */
-.pin{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-}
-
-.pin input{
-  font-size:28px;
-  letter-spacing:15px;
-  text-align:center;
-  border:none;
-  outline:none;
-  background:none;
-}
-
-/* ================= HOME ================= */
+/* HOME */
 .home{
   min-height:100vh;
   background:linear-gradient(180deg,#0f5ea8,#1d9bf0);
   color:white;
+  padding-bottom:80px;
 }
 
 /* HEADER */
 .header{
   padding:20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+}
+
+.header h2{
+  font-size:16px;
+  font-weight:400;
+}
+
+.header h1{
+  font-size:20px;
+  margin-top:5px;
 }
 
 /* CARD */
 .card{
-  margin:20px;
+  margin:0 20px;
   background:linear-gradient(135deg,#3ec6ff,#00a6ff);
   border-radius:20px;
   padding:20px;
-  color:white;
 }
 
-.card small{
-  opacity:0.8;
-}
+.card small{opacity:0.8;}
 
 .saldo{
   font-size:28px;
@@ -116,9 +64,24 @@ body{
   padding:15px;
   display:grid;
   grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+.menu div{
   text-align:center;
   font-size:12px;
   color:black;
+}
+
+.icon{
+  width:50px;
+  height:50px;
+  background:#eaf1f7;
+  border-radius:50%;
+  margin:0 auto 5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 /* LIST */
@@ -174,51 +137,49 @@ body{
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="screen active login">
-  <div class="logo">myBCA</div>
+<div class="home">
 
-  <div class="user">
-    <h3>Halo, NOUR MAANDHITO</h3>
-    <p>08********1</p>
-  </div>
-
-  <button class="btn" onclick="goPin()">Masuk</button>
-</div>
-
-<!-- PIN -->
-<div id="pin" class="screen pin">
-  <h3>Masukkan PIN</h3>
-  <input type="password" maxlength="4" id="pinInput" autofocus>
-</div>
-
-<!-- HOME -->
-<div id="home" class="screen home">
-
+  <!-- HEADER -->
   <div class="header">
-    <div>myBCA</div>
-    <div>⚙️</div>
+    <h2>Halo,</h2>
+    <h1>NOUR MAANDHITO</h1>
   </div>
 
+  <!-- SALDO -->
   <div class="card">
     <small>Saldo Aktif</small>
     <div class="saldo" id="saldo">Rp 0</div>
   </div>
 
+  <!-- MENU -->
   <div class="menu">
-    <div onclick="openModal('saldo')">Saldo</div>
-    <div onclick="openModal('transaksi')">Transaksi</div>
-    <div onclick="toggleList()">Mutasi</div>
-    <div onclick="openModal('transaksi')">Lainnya</div>
+    <div onclick="openModal('saldo')">
+      <div class="icon">💰</div>
+      Saldo
+    </div>
+    <div onclick="openModal('transaksi')">
+      <div class="icon">➕</div>
+      Transaksi
+    </div>
+    <div onclick="toggleList()">
+      <div class="icon">📄</div>
+      Mutasi
+    </div>
+    <div onclick="resetData()">
+      <div class="icon">♻️</div>
+      Reset
+    </div>
   </div>
 
+  <!-- LIST -->
   <div class="list" id="list"></div>
 
 </div>
 
+<!-- NAV -->
 <div class="nav">
   <div>🏠</div>
-  <div>📄</div>
+  <div>📊</div>
   <div>⭐</div>
   <div>👤</div>
 </div>
@@ -229,33 +190,8 @@ body{
 </div>
 
 <script>
-let savedPin = localStorage.getItem("pin") || "1234";
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data = JSON.parse(localStorage.getItem("data")) || [];
-
-/* SET PIN */
-if(!localStorage.getItem("pin")){
-  let p = prompt("Buat PIN:");
-  localStorage.setItem("pin", p);
-  savedPin = p;
-}
-
-/* PIN FIX (IMPORTANT) */
-document.getElementById("pinInput").addEventListener("input", function(){
-  let val = this.value;
-
-  if(val.length === 4){
-    if(val === savedPin){
-      switchScreen("home");
-      render();
-    }else{
-      alert("PIN salah");
-      this.value="";
-    }
-  }
-});
-
-function goPin(){switchScreen("pin");}
 
 /* RENDER */
 function render(){
@@ -290,7 +226,7 @@ function openModal(type){
   if(type==="saldo"){
     html=`
       <h3>Tambah Saldo</h3>
-      <input id="saldoInput" type="number">
+      <input id="saldoInput" type="number" placeholder="Nominal">
       <button onclick="tambahSaldo()">Simpan</button>
     `;
   }
@@ -298,7 +234,7 @@ function openModal(type){
   if(type==="transaksi"){
     html=`
       <h3>Tambah Transaksi</h3>
-      <input id="nominal" type="number">
+      <input id="nominal" type="number" placeholder="Nominal">
       <input id="ket" placeholder="Keterangan">
       <select id="tipe">
         <option value="masuk">Pemasukan</option>
@@ -341,10 +277,12 @@ function toggleList(){
   l.style.display = l.style.display==="none"?"block":"none";
 }
 
-function switchScreen(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+function resetData(){
+  localStorage.clear();
+  location.reload();
 }
+
+render();
 </script>
 
 </body>
