@@ -6,16 +6,9 @@
 <title>MyFinance</title>
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;}
 
-body{
-  background:#eaf1f7;
-}
+body{background:#eaf1f7;}
 
 /* HOME */
 .home{
@@ -26,19 +19,9 @@ body{
 }
 
 /* HEADER */
-.header{
-  padding:20px;
-}
-
-.header h2{
-  font-size:16px;
-  font-weight:400;
-}
-
-.header h1{
-  font-size:20px;
-  margin-top:5px;
-}
+.header{padding:20px;}
+.header h2{font-size:16px;font-weight:400;}
+.header h1{font-size:20px;margin-top:5px;}
 
 /* CARD */
 .card{
@@ -46,14 +29,20 @@ body{
   background:linear-gradient(135deg,#3ec6ff,#00a6ff);
   border-radius:20px;
   padding:20px;
+  position:relative;
 }
-
-.card small{opacity:0.8;}
 
 .saldo{
   font-size:28px;
   font-weight:bold;
   margin-top:10px;
+}
+
+.eye{
+  position:absolute;
+  right:20px;
+  top:20px;
+  cursor:pointer;
 }
 
 /* MENU */
@@ -67,38 +56,24 @@ body{
   gap:10px;
 }
 
-.menu div{
-  text-align:center;
-  font-size:12px;
-  color:black;
-}
+.menu div{text-align:center;font-size:12px;color:black;}
 
 .icon{
-  width:50px;
-  height:50px;
+  width:50px;height:50px;
   background:#eaf1f7;
   border-radius:50%;
   margin:0 auto 5px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex;align-items:center;justify-content:center;
 }
 
 /* LIST */
-.list{
-  margin:20px;
-}
-
+.list{margin:20px;}
 .item{
-  background:white;
-  color:black;
-  padding:12px;
-  border-radius:12px;
+  background:white;color:black;
+  padding:12px;border-radius:12px;
   margin-bottom:10px;
-  display:flex;
-  justify-content:space-between;
+  display:flex;justify-content:space-between;
 }
-
 .masuk{color:#16a34a;}
 .keluar{color:#dc2626;}
 
@@ -112,14 +87,39 @@ body{
   border-radius:20px 20px 0 0;
   transition:0.3s;
 }
-
 .modal.active{bottom:0;}
 
-.modal input, .modal select{
+.modal input{
   width:100%;
   padding:12px;
   margin-bottom:10px;
 }
+
+/* CUSTOM DROPDOWN */
+.select{
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+
+.options{
+  display:none;
+  background:white;
+  border-radius:10px;
+  margin-bottom:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.options div{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+
+.options div:last-child{border:none;}
+
+.options.show{display:block;}
 
 /* NAV */
 .nav{
@@ -131,7 +131,6 @@ body{
   justify-content:space-around;
   padding:10px;
 }
-
 </style>
 </head>
 
@@ -139,7 +138,6 @@ body{
 
 <div class="home">
 
-  <!-- HEADER -->
   <div class="header">
     <h2>Halo,</h2>
     <h1>NOUR MAANDHITO</h1>
@@ -149,34 +147,28 @@ body{
   <div class="card">
     <small>Saldo Aktif</small>
     <div class="saldo" id="saldo">Rp 0</div>
+    <div class="eye" onclick="toggleSaldo()">👁️</div>
   </div>
 
   <!-- MENU -->
   <div class="menu">
     <div onclick="openModal('saldo')">
-      <div class="icon">💰</div>
-      Saldo
+      <div class="icon">💰</div>Saldo
     </div>
     <div onclick="openModal('transaksi')">
-      <div class="icon">➕</div>
-      Transaksi
+      <div class="icon">➕</div>Transaksi
     </div>
     <div onclick="toggleList()">
-      <div class="icon">📄</div>
-      Mutasi
+      <div class="icon">📄</div>Mutasi
     </div>
     <div onclick="resetData()">
-      <div class="icon">♻️</div>
-      Reset
+      <div class="icon">♻️</div>Reset
     </div>
   </div>
 
-  <!-- LIST -->
   <div class="list" id="list"></div>
-
 </div>
 
-<!-- NAV -->
 <div class="nav">
   <div>🏠</div>
   <div>📊</div>
@@ -192,6 +184,35 @@ body{
 <script>
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data = JSON.parse(localStorage.getItem("data")) || [];
+let showSaldo = true;
+
+/* FORMAT */
+function formatRupiah(n){
+  return "Rp " + n.toLocaleString();
+}
+
+/* ANIMASI SALDO */
+function animateSaldo(target){
+  let el = document.getElementById("saldo");
+  let start = 0;
+  let duration = 500;
+  let startTime = null;
+
+  function animate(time){
+    if(!startTime) startTime = time;
+    let progress = time - startTime;
+    let percent = Math.min(progress / duration, 1);
+
+    let value = Math.floor(percent * target);
+    el.innerText = showSaldo ? formatRupiah(value) : "••••••";
+
+    if(progress < duration){
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
 
 /* RENDER */
 function render(){
@@ -201,8 +222,7 @@ function render(){
     saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
   });
 
-  document.getElementById("saldo").innerText =
-    "Rp "+saldo.toLocaleString();
+  animateSaldo(saldo);
 
   let html="";
   data.slice().reverse().forEach(d=>{
@@ -217,6 +237,12 @@ function render(){
   });
 
   document.getElementById("list").innerHTML=html;
+}
+
+/* TOGGLE SALDO */
+function toggleSaldo(){
+  showSaldo = !showSaldo;
+  render();
 }
 
 /* MODAL */
@@ -236,10 +262,13 @@ function openModal(type){
       <h3>Tambah Transaksi</h3>
       <input id="nominal" type="number" placeholder="Nominal">
       <input id="ket" placeholder="Keterangan">
-      <select id="tipe">
-        <option value="masuk">Pemasukan</option>
-        <option value="keluar">Pengeluaran</option>
-      </select>
+
+      <div class="select" onclick="toggleDropdown()">Pilih Tipe</div>
+      <div class="options" id="dropdown">
+        <div onclick="setTipe('masuk')">Pemasukan</div>
+        <div onclick="setTipe('keluar')">Pengeluaran</div>
+      </div>
+
       <button onclick="tambah()">Simpan</button>
     `;
   }
@@ -248,6 +277,20 @@ function openModal(type){
   document.getElementById("modal").classList.add("active");
 }
 
+let selectedTipe="masuk";
+
+function toggleDropdown(){
+  document.getElementById("dropdown").classList.toggle("show");
+}
+
+function setTipe(val){
+  selectedTipe = val;
+  document.querySelector(".select").innerText =
+    val==="masuk"?"Pemasukan":"Pengeluaran";
+  toggleDropdown();
+}
+
+/* ACTION */
 function tambahSaldo(){
   let n = Number(document.getElementById("saldoInput").value);
   saldoManual += n;
@@ -259,9 +302,8 @@ function tambahSaldo(){
 function tambah(){
   let nominal = Number(document.getElementById("nominal").value);
   let ket = document.getElementById("ket").value;
-  let tipe = document.getElementById("tipe").value;
 
-  data.push({nominal,ket,tipe});
+  data.push({nominal,ket,tipe:selectedTipe});
   localStorage.setItem("data", JSON.stringify(data));
 
   closeModal();
