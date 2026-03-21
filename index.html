@@ -196,7 +196,18 @@ body{background:#eaf1f7;}
     </div>
   </div>
 
-  <div class="list" id="list"></div>
+<div style="margin:20px;">
+  <input id="search" placeholder="Cari transaksi..." oninput="render()" 
+  style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:10px;">
+
+  <input type="month" id="filterBulan" onchange="render()" 
+  style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:10px;">
+
+  <input type="date" id="filterTanggal" onchange="render()" 
+  style="width:100%;padding:10px;border-radius:10px;border:none;">
+</div>
+
+<div class="list" id="list"></div>
 </div>
 
 <div class="nav">
@@ -218,6 +229,8 @@ body{background:#eaf1f7;}
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data = JSON.parse(localStorage.getItem("data")) || [];
 let showSaldo = true;
+let selectedTipe="masuk";
+let selectedKategori="lainnya";
 
 /* FORMAT */
 function rupiah(n){
@@ -259,6 +272,33 @@ function animateSaldo(target){
   requestAnimationFrame(anim);
 }
 
+/* FILTER */
+function applyFilter(arr){
+  let search = document.getElementById("search")?.value.toLowerCase() || "";
+  let bulan = document.getElementById("filterBulan")?.value;
+  let tanggal = document.getElementById("filterTanggal")?.value;
+
+  return arr.filter(d=>{
+    let text = (d.ket + " " + (d.kategori||"")).toLowerCase();
+
+    let matchSearch = text.includes(search);
+
+    let matchBulan = true;
+    if(bulan){
+      let dBulan = new Date(d.time).toISOString().slice(0,7);
+      matchBulan = dBulan === bulan;
+    }
+
+    let matchTanggal = true;
+    if(tanggal){
+      let dTgl = new Date(d.time).toISOString().slice(0,10);
+      matchTanggal = dTgl === tanggal;
+    }
+
+    return matchSearch && matchBulan && matchTanggal;
+  });
+}
+
 /* RENDER */
 function render(){
   let saldo = saldoManual;
@@ -269,26 +309,27 @@ function render(){
 
   animateSaldo(saldo);
 
-  renderMutasi();
+  let filtered = applyFilter(data);
+
+  renderMutasi(filtered);
 }
 
-/* MUTASI GROUPING */
-function renderMutasi(){
+/* MUTASI */
+function renderMutasi(arr){
   let list = document.getElementById("list");
 
   let grouped = {};
 
-  data.slice().reverse().forEach(d=>{
+  arr.slice().reverse().forEach(d=>{
     let tgl = formatTanggal(d.time);
-
-    if(!grouped[tgl]) grouped[tgl] = [];
+    if(!grouped[tgl]) grouped[tgl]=[];
     grouped[tgl].push(d);
   });
 
-  let html = "";
+  let html="";
 
   for(let tgl in grouped){
-    html += `
+    html+=`
     <div style="margin-bottom:15px;">
       <div style="color:#64748b;font-size:12px;margin-bottom:5px;">
         ${tgl}
@@ -296,12 +337,12 @@ function renderMutasi(){
     `;
 
     grouped[tgl].forEach(d=>{
-      html += `
+      html+=`
       <div class="item">
         <div>
           <div style="font-size:14px;">${d.ket}</div>
           <div style="font-size:11px;color:#64748b;">
-            ${formatJam(d.time)}
+            ${formatJam(d.time)} • ${d.kategori||"-"}
           </div>
         </div>
 
@@ -311,16 +352,10 @@ function renderMutasi(){
       </div>`;
     });
 
-    html += `</div>`;
+    html+=`</div>`;
   }
 
   list.innerHTML = html;
-}
-
-/* TOGGLE SALDO */
-function toggleSaldo(){
-  showSaldo = !showSaldo;
-  render();
 }
 
 /* MODAL */
@@ -330,7 +365,7 @@ function openModal(type){
   if(type==="saldo"){
     html=`
     <h3>Tambah Saldo</h3>
-    <input id="saldoInput" type="number" placeholder="Nominal">
+    <input id="saldoInput" type="number">
     <button onclick="tambahSaldo()">Simpan</button>`;
   }
 
@@ -346,6 +381,14 @@ function openModal(type){
       <div onclick="setTipe('keluar')">Pengeluaran</div>
     </div>
 
+    <div class="select" onclick="toggleKategori()">Pilih Kategori</div>
+    <div class="options" id="dropdownKat">
+      <div onclick="setKategori('makan')">🍔 Makan</div>
+      <div onclick="setKategori('transport')">🚗 Transport</div>
+      <div onclick="setKategori('belanja')">🛍️ Belanja</div>
+      <div onclick="setKategori('lainnya')">💼 Lainnya</div>
+    </div>
+
     <button onclick="tambah()">Simpan</button>`;
   }
 
@@ -354,23 +397,24 @@ function openModal(type){
   document.getElementById("backdrop").classList.add("active");
 }
 
-function closeModal(){
-  document.getElementById("modal").classList.remove("active");
-  document.getElementById("backdrop").classList.remove("active");
-}
-
 /* DROPDOWN */
-let selectedTipe="masuk";
-
 function toggleDropdown(){
   document.getElementById("dropdown").classList.toggle("show");
 }
 
+function toggleKategori(){
+  document.getElementById("dropdownKat").classList.toggle("show");
+}
+
 function setTipe(val){
-  selectedTipe = val;
-  document.querySelector(".select").innerText =
+  selectedTipe=val;
+  document.querySelectorAll(".select")[0].innerText =
     val==="masuk"?"Pemasukan":"Pengeluaran";
-  toggleDropdown();
+}
+
+function setKategori(val){
+  selectedKategori=val;
+  document.querySelectorAll(".select")[1].innerText = val;
 }
 
 /* ACTION */
@@ -390,7 +434,8 @@ function tambah(){
     nominal,
     ket,
     tipe:selectedTipe,
-    time: new Date().toISOString()
+    kategori:selectedKategori,
+    time:new Date().toISOString()
   });
 
   localStorage.setItem("data", JSON.stringify(data));
@@ -399,14 +444,24 @@ function tambah(){
   render();
 }
 
+function closeModal(){
+  document.getElementById("modal").classList.remove("active");
+  document.getElementById("backdrop").classList.remove("active");
+}
+
 function toggleList(){
   let l=document.getElementById("list");
-  l.style.display = l.style.display==="none"?"block":"block";
+  l.style.display="block";
 }
 
 function resetData(){
   localStorage.clear();
   location.reload();
+}
+
+function toggleSaldo(){
+  showSaldo=!showSaldo;
+  render();
 }
 
 render();
