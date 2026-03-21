@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyFinance</title>
+<title>MyBCA Clone</title>
 
 <style>
 *{
@@ -14,12 +14,51 @@
 }
 
 body{
-  background:#0b1220;
-  color:white;
+  background:#f1f5f9;
 }
 
-/* LOGIN PIN (BANK STYLE) */
-#login{
+/* SCREEN */
+.screen{display:none;}
+.active{display:block;}
+
+/* ================= LOGIN PAGE ================= */
+.login-page{
+  padding:20px;
+}
+
+.logo{
+  font-size:28px;
+  color:#0ea5e9;
+  font-weight:bold;
+  margin-top:40px;
+}
+
+.user-box{
+  margin-top:40px;
+}
+
+.user-name{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.user-phone{
+  opacity:0.6;
+}
+
+.btn{
+  margin-top:40px;
+  width:100%;
+  padding:15px;
+  border-radius:30px;
+  border:none;
+  background:#0ea5e9;
+  color:white;
+  font-size:18px;
+}
+
+/* ================= PIN PAGE ================= */
+.pin-page{
   height:100vh;
   display:flex;
   flex-direction:column;
@@ -27,278 +66,191 @@ body{
   align-items:center;
 }
 
-.pin-box{
+.pin-dots{
   display:flex;
-  gap:10px;
+  gap:15px;
   margin-top:20px;
 }
 
-.pin-box input{
-  width:50px;
-  height:60px;
-  border-radius:12px;
-  border:none;
-  text-align:center;
-  font-size:22px;
-  background:#1e293b;
-  color:white;
+.dot{
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:#cbd5e1;
 }
 
-/* APP */
-.hidden{display:none;}
+.dot.active{
+  background:#0ea5e9;
+}
 
-.container{
+/* ================= HOME ================= */
+.home{
+  min-height:100vh;
+  background:linear-gradient(180deg,#0ea5e9,#2563eb);
+  color:white;
   padding:20px;
 }
 
-/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
-  margin-bottom:20px;
-  font-size:14px;
-  opacity:0.7;
 }
 
-/* SALDO CARD */
 .card{
-  background:linear-gradient(135deg,#1e3a8a,#2563eb);
+  margin-top:20px;
+  background:white;
+  color:black;
   border-radius:20px;
   padding:20px;
-  box-shadow:0 10px 40px rgba(37,99,235,0.4);
-  margin-bottom:20px;
 }
 
 .saldo{
-  font-size:28px;
+  font-size:24px;
   font-weight:bold;
-  margin-top:10px;
 }
 
-.actions{
-  display:flex;
+.menu{
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
   gap:10px;
-  margin-top:15px;
 }
 
-.action-btn{
-  flex:1;
-  padding:10px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.2);
-  border:none;
-  color:white;
+.menu div{
+  text-align:center;
   font-size:12px;
 }
 
-/* LIST */
-.item{
-  display:flex;
-  justify-content:space-between;
-  padding:15px;
-  border-radius:15px;
-  background:#111827;
-  margin-bottom:10px;
-}
-
-.masuk{color:#4ade80;}
-.keluar{color:#f87171;}
-
-/* MODAL */
-#modal{
+/* NAVBAR */
+.nav{
   position:fixed;
-  bottom:-100%;
-  width:100%;
-  background:#020617;
-  border-radius:20px 20px 0 0;
-  padding:20px;
-  transition:0.3s;
-}
-
-#modal.active{
   bottom:0;
-}
-
-.modalBox input,select{
   width:100%;
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:10px;
-  border:none;
-  background:#1e293b;
-  color:white;
-}
-
-.modalBox button{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:white;
+  background:white;
+  display:flex;
+  justify-content:space-around;
+  padding:10px;
 }
 
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login">
+<!-- SCREEN 1 -->
+<div id="login" class="screen active login-page">
+  <div class="logo">myBCA</div>
+
+  <div class="user-box">
+    <div class="user-name">Halo, NOUR MAANDHITO</div>
+    <div class="user-phone">08********1</div>
+  </div>
+
+  <button class="btn" onclick="goPin()">Masuk</button>
+</div>
+
+<!-- SCREEN 2 -->
+<div id="pin" class="screen pin-page">
   <h3>Masukkan PIN</h3>
-  <div class="pin-box">
-    <input maxlength="1">
-    <input maxlength="1">
-    <input maxlength="1">
-    <input maxlength="1">
+
+  <div class="pin-dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app" class="hidden container">
-
+<!-- SCREEN 3 -->
+<div id="home" class="screen home">
+  
   <div class="header">
-    <span>MyFinance</span>
-    <span onclick="toggleSaldo()">👁️</span>
+    <div>myBCA</div>
+    <div>⚙️</div>
   </div>
 
   <div class="card">
     <div>Saldo Aktif</div>
     <div class="saldo" id="saldo">Rp 0</div>
-
-    <div class="actions">
-      <button class="action-btn" onclick="openModal('saldo')">+ Saldo</button>
-      <button class="action-btn" onclick="openModal('transaksi')">+ Transaksi</button>
-    </div>
+    <button onclick="tambahSaldo()">+ Isi Saldo</button>
   </div>
 
-  <div id="list"></div>
+  <div class="menu">
+    <div>Transfer</div>
+    <div>QRIS</div>
+    <div>Top Up</div>
+    <div>History</div>
+  </div>
 
 </div>
 
-<!-- MODAL -->
-<div id="modal">
-  <div class="modalBox" id="modalContent"></div>
+<div class="nav">
+  <div>🏠</div>
+  <div>📄</div>
+  <div>⭐</div>
+  <div>👤</div>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("data")) || [];
-let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
-let showSaldo = true;
+let currentPin="";
+let savedPin = localStorage.getItem("pin") || "1234";
+let saldo = Number(localStorage.getItem("saldo")) || 0;
 
-/* PIN */
+/* PIN SETUP */
 if(!localStorage.getItem("pin")){
-  localStorage.setItem("pin","1234");
+  let p = prompt("Buat PIN:");
+  localStorage.setItem("pin", p);
+  savedPin = p;
 }
 
-const inputs = document.querySelectorAll(".pin-box input");
+function goPin(){
+  switchScreen("pin");
+}
 
-inputs.forEach((input,i)=>{
-  input.addEventListener("input",()=>{
-    if(input.value && i < 3) inputs[i+1].focus();
+/* INPUT PIN */
+document.addEventListener("keydown",(e)=>{
+  if(document.getElementById("pin").classList.contains("active")){
+    if(!isNaN(e.key)){
+      currentPin += e.key;
+      updateDots();
+    }
 
-    let pin = Array.from(inputs).map(x=>x.value).join("");
-    if(pin.length === 4){
-      if(pin === localStorage.getItem("pin")){
-        loginSuccess();
+    if(currentPin.length===4){
+      if(currentPin===savedPin){
+        switchScreen("home");
+        render();
       }else{
         alert("PIN salah");
-        inputs.forEach(x=>x.value="");
-        inputs[0].focus();
+        currentPin="";
+        updateDots();
       }
     }
-  });
+  }
 });
 
-function loginSuccess(){
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  render();
-}
-
-/* RENDER */
-function render(){
-  let saldo = saldoManual;
-
-  data.forEach(d=>{
-    if(d.tipe==="masuk") saldo+=d.nominal;
-    else saldo-=d.nominal;
+function updateDots(){
+  let dots = document.querySelectorAll(".dot");
+  dots.forEach((d,i)=>{
+    d.classList.toggle("active", i < currentPin.length);
   });
-
-  document.getElementById("saldo").innerText =
-    showSaldo ? "Rp "+saldo.toLocaleString() : "••••••";
-
-  let list="";
-  data.slice().reverse().forEach(d=>{
-    list+=`
-      <div class="item">
-        <div>${d.ket}</div>
-        <div class="${d.tipe}">
-          ${d.tipe==="masuk"?"+":"-"}Rp ${d.nominal}
-        </div>
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML=list;
 }
 
-/* MODAL */
-function openModal(type){
-  let html="";
-
-  if(type==="saldo"){
-    html=`
-      <h3>Tambah Saldo</h3>
-      <input id="saldoInput" type="number" placeholder="Nominal">
-      <button onclick="tambahSaldo()">Simpan</button>
-    `;
-  }
-
-  if(type==="transaksi"){
-    html=`
-      <h3>Tambah Transaksi</h3>
-      <input id="nominal" type="number" placeholder="Nominal">
-      <input id="ket" placeholder="Keterangan">
-      <select id="tipe">
-        <option value="masuk">Pemasukan</option>
-        <option value="keluar">Pengeluaran</option>
-      </select>
-      <button onclick="tambah()">Simpan</button>
-    `;
-  }
-
-  document.getElementById("modalContent").innerHTML=html;
-  document.getElementById("modal").classList.add("active");
-}
-
+/* SALDO */
 function tambahSaldo(){
-  let n = Number(document.getElementById("saldoInput").value);
-  saldoManual += n;
-  localStorage.setItem("saldoManual", saldoManual);
-  closeModal();
+  let n = prompt("Isi saldo:");
+  saldo += Number(n);
+  localStorage.setItem("saldo", saldo);
   render();
 }
 
-/* TAMBAH TRANSAKSI */
-function tambah(){
-  let nominal = Number(document.getElementById("nominal").value);
-  let ket = document.getElementById("ket").value;
-  let tipe = document.getElementById("tipe").value;
-
-  data.push({nominal,ket,tipe});
-  localStorage.setItem("data", JSON.stringify(data));
-
-  closeModal();
-  render();
+function render(){
+  document.getElementById("saldo").innerText =
+    "Rp " + saldo.toLocaleString();
 }
 
-function closeModal(){
-  document.getElementById("modal").classList.remove("active");
-}
-
-function toggleSaldo(){
-  showSaldo=!showSaldo;
-  render();
+/* NAV */
+function switchScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 </script>
 
