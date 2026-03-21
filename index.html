@@ -162,6 +162,32 @@ body{background:#eaf1f7;}
   padding:12px;
   box-shadow:0 -5px 20px rgba(0,0,0,0.1);
 }
+
+.filter-box{
+  margin:20px;
+  background:white;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+.filter-box input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #eee;
+  margin-bottom:10px;
+  font-size:14px;
+}
+
+.filter-row{
+  display:flex;
+  gap:10px;
+}
+
+.filter-row input{
+  flex:1;
+}
 </style>
 </head>
 
@@ -196,15 +222,13 @@ body{background:#eaf1f7;}
     </div>
   </div>
 
-<div style="margin:20px;">
-  <input id="search" placeholder="Cari transaksi..." oninput="render()" 
-  style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:10px;">
+<div class="filter-box">
+  <input id="search" placeholder="🔍 Cari transaksi..." oninput="render()">
 
-  <input type="month" id="filterBulan" onchange="render()" 
-  style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:10px;">
-
-  <input type="date" id="filterTanggal" onchange="render()" 
-  style="width:100%;padding:10px;border-radius:10px;border:none;">
+  <div class="filter-row">
+    <input type="month" id="filterBulan" onchange="render()">
+    <input type="date" id="filterTanggal" onchange="render()">
+  </div>
 </div>
 
 <div class="list" id="list"></div>
@@ -375,13 +399,13 @@ function openModal(type){
     <input id="nominal" type="number" placeholder="Nominal">
     <input id="ket" placeholder="Keterangan">
 
-    <div class="select" onclick="toggleDropdown()">Pilih Tipe</div>
+    <div class="select select-tipe" onclick="toggleDropdown()">Pilih Tipe</div>
     <div class="options" id="dropdown">
       <div onclick="setTipe('masuk')">Pemasukan</div>
       <div onclick="setTipe('keluar')">Pengeluaran</div>
     </div>
 
-    <div class="select" onclick="toggleKategori()">Pilih Kategori</div>
+    <div class="select select-kategori" onclick="toggleKategori()">Pilih Kategori</div>
     <div class="options" id="dropdownKat">
       <div onclick="setKategori('makan')">🍔 Makan</div>
       <div onclick="setKategori('transport')">🚗 Transport</div>
@@ -407,14 +431,16 @@ function toggleKategori(){
 }
 
 function setTipe(val){
-  selectedTipe=val;
-  document.querySelectorAll(".select")[0].innerText =
+  selectedTipe = val;
+
+  document.querySelector(".select-tipe").innerText =
     val==="masuk"?"Pemasukan":"Pengeluaran";
 }
 
 function setKategori(val){
-  selectedKategori=val;
-  document.querySelectorAll(".select")[1].innerText = val;
+  selectedKategori = val;
+
+  document.querySelector(".select-kategori").innerText = val;
 }
 
 /* ACTION */
@@ -428,7 +454,28 @@ function tambahSaldo(){
 
 function tambah(){
   let nominal = Number(document.getElementById("nominal").value);
-  let ket = document.getElementById("ket").value;
+  let ket = document.getElementById("ket").value.trim();
+
+  // VALIDASI WAJIB
+  if(!nominal || nominal <= 0){
+    alert("Nominal harus diisi dengan benar");
+    return;
+  }
+
+  if(!ket){
+    alert("Keterangan wajib diisi");
+    return;
+  }
+
+  if(!selectedTipe){
+    alert("Pilih tipe transaksi");
+    return;
+  }
+
+  if(!selectedKategori){
+    alert("Pilih kategori");
+    return;
+  }
 
   data.push({
     nominal,
@@ -442,6 +489,10 @@ function tambah(){
 
   closeModal();
   render();
+
+  // RESET STATE (INI PENTING)
+  selectedTipe = "masuk";
+  selectedKategori = "lainnya";
 }
 
 function closeModal(){
@@ -463,6 +514,14 @@ function toggleSaldo(){
   showSaldo=!showSaldo;
   render();
 }
+
+document.addEventListener("click", function(e){
+  if(!e.target.closest(".select")){
+    document.querySelectorAll(".options").forEach(o=>{
+      o.classList.remove("show");
+    });
+  }
+});
 
 render();
 </script>
