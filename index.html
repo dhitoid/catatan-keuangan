@@ -6,7 +6,13 @@
 <title>MyFinance Pro</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+}
+
 body{background:#eaf1f7;}
 
 /* HOME */
@@ -30,87 +36,78 @@ body{background:#eaf1f7;}
   border-radius:20px;
   padding:20px;
   position:relative;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 
-.saldo{font-size:30px;font-weight:bold;margin-top:10px;}
-.eye{position:absolute;right:20px;top:20px;cursor:pointer;}
+.saldo{
+  font-size:30px;
+  font-weight:bold;
+  margin-top:10px;
+}
 
-/* MENU */
+.eye{
+  position:absolute;
+  right:20px;
+  top:20px;
+  cursor:pointer;
+}
+
+/* SWIPE MENU */
 .menu{
   margin:20px;
   display:flex;
-  gap:10px;
+  gap:15px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
 }
 
-.menu button{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:12px;
+.menu::-webkit-scrollbar{display:none;}
+
+.menu-item{
+  min-width:80px;
   background:white;
+  color:black;
+  border-radius:20px;
+  padding:10px;
+  text-align:center;
+  scroll-snap-align:start;
 }
 
-/* FILTER */
-.filter{
+.icon{
+  width:50px;
+  height:50px;
+  background:#eaf1f7;
+  border-radius:50%;
+  margin:0 auto 5px;
   display:flex;
-  gap:10px;
-  margin:0 20px;
+  align-items:center;
+  justify-content:center;
 }
-
-.filter button{
-  flex:1;
-  padding:8px;
-  border:none;
-  border-radius:10px;
-  background:rgba(255,255,255,0.2);
-  color:white;
-}
-
-.filter .active{background:white;color:black;}
 
 /* LIST */
 .list{margin:20px;}
-
-.group{
-  margin-bottom:20px;
-}
-
-.group-title{
-  font-size:12px;
-  opacity:0.7;
-  margin-bottom:8px;
-}
-
 .item{
   background:white;
   color:black;
   padding:12px;
   border-radius:12px;
-  margin-bottom:8px;
-}
-
-.top{
+  margin-bottom:10px;
   display:flex;
   justify-content:space-between;
 }
-
-.bottom{
-  font-size:11px;
-  opacity:0.6;
-  margin-top:5px;
-}
-
 .masuk{color:#16a34a;}
 .keluar{color:#dc2626;}
 
-/* MODAL */
+/* MODAL BACKDROP */
 .backdrop{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   background:rgba(0,0,0,0.3);
   display:none;
 }
 .backdrop.active{display:block;}
 
+/* MODAL */
 .modal{
   position:fixed;
   bottom:-100%;
@@ -126,7 +123,33 @@ body{background:#eaf1f7;}
   width:100%;
   padding:12px;
   margin-bottom:10px;
+  border-radius:10px;
+  border:1px solid #eee;
 }
+
+/* CUSTOM DROPDOWN */
+.select{
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+
+.options{
+  display:none;
+  background:white;
+  border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  margin-bottom:10px;
+}
+
+.options div{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+.options div:last-child{border:none;}
+.options.show{display:block;}
 
 /* NAV */
 .nav{
@@ -137,6 +160,7 @@ body{background:#eaf1f7;}
   display:flex;
   justify-content:space-around;
   padding:12px;
+  box-shadow:0 -5px 20px rgba(0,0,0,0.1);
 }
 </style>
 </head>
@@ -156,31 +180,36 @@ body{background:#eaf1f7;}
     <div class="eye" onclick="toggleSaldo()">👁️</div>
   </div>
 
-  <!-- MENU -->
+  <!-- SWIPE MENU -->
   <div class="menu">
-    <button onclick="openModal('saldo')">Tambah Saldo</button>
-    <button onclick="openModal('transaksi')">Transaksi</button>
-    <button onclick="resetData()">Reset</button>
-  </div>
-
-  <!-- FILTER -->
-  <div class="filter">
-    <button id="harianBtn" class="active" onclick="setFilter('harian')">Harian</button>
-    <button id="bulananBtn" onclick="setFilter('bulanan')">Bulanan</button>
+    <div class="menu-item" onclick="openModal('saldo')">
+      <div class="icon">💰</div>Saldo
+    </div>
+    <div class="menu-item" onclick="openModal('transaksi')">
+      <div class="icon">➕</div>Transaksi
+    </div>
+    <div class="menu-item" onclick="toggleList()">
+      <div class="icon">📄</div>Mutasi
+    </div>
+    <div class="menu-item" onclick="resetData()">
+      <div class="icon">♻️</div>Reset
+    </div>
   </div>
 
   <div class="list" id="list"></div>
-
 </div>
 
 <div class="nav">
   <div>🏠</div>
   <div>📊</div>
+  <div>⭐</div>
   <div>👤</div>
 </div>
 
+<!-- BACKDROP -->
 <div id="backdrop" class="backdrop" onclick="closeModal()"></div>
 
+<!-- MODAL -->
 <div id="modal" class="modal">
   <div id="modalContent"></div>
 </div>
@@ -189,10 +218,46 @@ body{background:#eaf1f7;}
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data = JSON.parse(localStorage.getItem("data")) || [];
 let showSaldo = true;
-let filterMode = "harian";
 
 /* FORMAT */
-function rupiah(n){return "Rp "+n.toLocaleString("id-ID");}
+function rupiah(n){
+  return "Rp " + n.toLocaleString("id-ID");
+}
+
+function formatTanggal(date){
+  return new Date(date).toLocaleDateString("id-ID", {
+    day:"numeric",
+    month:"long",
+    year:"numeric"
+  });
+}
+
+function formatJam(date){
+  return new Date(date).toLocaleTimeString("id-ID", {
+    hour:"2-digit",
+    minute:"2-digit"
+  });
+}
+
+/* ANIMASI SALDO */
+function animateSaldo(target){
+  let el = document.getElementById("saldo");
+  let start = 0;
+  let duration = 500;
+  let startTime = null;
+
+  function anim(t){
+    if(!startTime) startTime = t;
+    let progress = t - startTime;
+    let percent = Math.min(progress/duration,1);
+    let val = Math.floor(percent * target);
+
+    el.innerText = showSaldo ? rupiah(val) : "••••••";
+
+    if(progress < duration) requestAnimationFrame(anim);
+  }
+  requestAnimationFrame(anim);
+}
 
 /* RENDER */
 function render(){
@@ -202,63 +267,59 @@ function render(){
     saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
   });
 
-  document.getElementById("saldo").innerText =
-    showSaldo ? rupiah(saldo) : "••••••";
+  animateSaldo(saldo);
+
+  renderMutasi();
+}
+
+/* MUTASI GROUPING */
+function renderMutasi(){
+  let list = document.getElementById("list");
 
   let grouped = {};
 
-  data.forEach(d=>{
-    let date = new Date(d.time);
-    let key = filterMode==="harian"
-      ? date.toLocaleDateString("id-ID")
-      : date.toLocaleDateString("id-ID",{month:"long",year:"numeric"});
+  data.slice().reverse().forEach(d=>{
+    let tgl = formatTanggal(d.time);
 
-    if(!grouped[key]) grouped[key]=[];
-    grouped[key].push(d);
+    if(!grouped[tgl]) grouped[tgl] = [];
+    grouped[tgl].push(d);
   });
 
-  let html="";
+  let html = "";
 
-  Object.keys(grouped).reverse().forEach(k=>{
-    html+=`<div class="group"><div class="group-title">${k}</div>`;
+  for(let tgl in grouped){
+    html += `
+    <div style="margin-bottom:15px;">
+      <div style="color:#64748b;font-size:12px;margin-bottom:5px;">
+        ${tgl}
+      </div>
+    `;
 
-    grouped[k].forEach(d=>{
-      let t = new Date(d.time);
-      let jam = t.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
-
-      html+=`
+    grouped[tgl].forEach(d=>{
+      html += `
       <div class="item">
-        <div class="top">
-          <span>${d.ket}</span>
-          <span class="${d.tipe}">
-            ${d.tipe==="masuk"?"+":"-"}${rupiah(d.nominal)}
-          </span>
+        <div>
+          <div style="font-size:14px;">${d.ket}</div>
+          <div style="font-size:11px;color:#64748b;">
+            ${formatJam(d.time)}
+          </div>
         </div>
-        <div class="bottom">${jam}</div>
+
+        <div class="${d.tipe}">
+          ${d.tipe==="masuk"?"+":"-"}${rupiah(d.nominal)}
+        </div>
       </div>`;
     });
 
-    html+=`</div>`;
-  });
+    html += `</div>`;
+  }
 
-  document.getElementById("list").innerHTML=html;
+  list.innerHTML = html;
 }
 
-/* FILTER */
-function setFilter(mode){
-  filterMode = mode;
-
-  document.getElementById("harianBtn").classList.remove("active");
-  document.getElementById("bulananBtn").classList.remove("active");
-
-  document.getElementById(mode+"Btn").classList.add("active");
-
-  render();
-}
-
-/* TOGGLE */
+/* TOGGLE SALDO */
 function toggleSaldo(){
-  showSaldo=!showSaldo;
+  showSaldo = !showSaldo;
   render();
 }
 
@@ -269,20 +330,21 @@ function openModal(type){
   if(type==="saldo"){
     html=`
     <h3>Tambah Saldo</h3>
-    <input id="saldoInput" type="number">
+    <input id="saldoInput" type="number" placeholder="Nominal">
     <button onclick="tambahSaldo()">Simpan</button>`;
   }
 
   if(type==="transaksi"){
     html=`
     <h3>Tambah Transaksi</h3>
-    <input id="nominal" type="number">
+    <input id="nominal" type="number" placeholder="Nominal">
     <input id="ket" placeholder="Keterangan">
 
-    <select id="tipe">
-      <option value="masuk">Pemasukan</option>
-      <option value="keluar">Pengeluaran</option>
-    </select>
+    <div class="select" onclick="toggleDropdown()">Pilih Tipe</div>
+    <div class="options" id="dropdown">
+      <div onclick="setTipe('masuk')">Pemasukan</div>
+      <div onclick="setTipe('keluar')">Pengeluaran</div>
+    </div>
 
     <button onclick="tambah()">Simpan</button>`;
   }
@@ -297,6 +359,20 @@ function closeModal(){
   document.getElementById("backdrop").classList.remove("active");
 }
 
+/* DROPDOWN */
+let selectedTipe="masuk";
+
+function toggleDropdown(){
+  document.getElementById("dropdown").classList.toggle("show");
+}
+
+function setTipe(val){
+  selectedTipe = val;
+  document.querySelector(".select").innerText =
+    val==="masuk"?"Pemasukan":"Pengeluaran";
+  toggleDropdown();
+}
+
 /* ACTION */
 function tambahSaldo(){
   let n = Number(document.getElementById("saldoInput").value);
@@ -309,12 +385,11 @@ function tambahSaldo(){
 function tambah(){
   let nominal = Number(document.getElementById("nominal").value);
   let ket = document.getElementById("ket").value;
-  let tipe = document.getElementById("tipe").value;
 
   data.push({
     nominal,
     ket,
-    tipe,
+    tipe:selectedTipe,
     time: new Date().toISOString()
   });
 
@@ -322,6 +397,11 @@ function tambah(){
 
   closeModal();
   render();
+}
+
+function toggleList(){
+  let l=document.getElementById("list");
+  l.style.display = l.style.display==="none"?"block":"block";
 }
 
 function resetData(){
