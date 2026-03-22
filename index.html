@@ -967,13 +967,7 @@ auth.onAuthStateChanged(user => {
 });
 
 function loginGoogle(){
-  auth.signInWithPopup(provider)
-    .then(res => {
-      console.log("Login sukses:", res.user);
-    })
-    .catch(err => {
-      console.error("Login error:", err);
-    });
+  auth.signInWithRedirect(provider);
 }
 
 function updateUserUI(user){
@@ -991,9 +985,6 @@ function loadUserProfile(uid){
     }
   });
 }
-
-function openProfileModal(){
-  document.getElementById("profileModal").style.display = "
 
 function saveName(){
   const newName = document.getElementById("editName").value;
@@ -1469,6 +1460,8 @@ function saveBudget(){
   }
 
   setBudget(selectedBudgetKategori, nominal);
+  
+  saveDataCloud();
   closeModal();
 }
 
@@ -1778,8 +1771,19 @@ function tambahSaldo(){
     time: new Date().toISOString()
   });
 
+  showToast("Top Up berhasil 💰","success", n, "masuk", "Top Up Saldo");
+
+  closeModal();
+  render();
+  generateInsight();
+  saveDataCloud();
+}
+
 function saveDataCloud(){
-  if(!currentUser) return;
+  if(!currentUser){
+  localStorage.setItem("data", JSON.stringify(data));
+  return;
+}
 
   db.ref("users/" + currentUser.uid).set({
     data,
@@ -1789,27 +1793,17 @@ function saveDataCloud(){
   });
 }
 
-  // ❌ HAPUS INI (biar tidak double)
-  // saldoManual += n;
-
-  showToast("Top Up berhasil 💰","success", n, "masuk", "Top Up Saldo");
-
-  closeModal();
-  render();
-  generateInsight();
-}
-
 function loadDataCloud(uid){
-  db.ref("users/" + uid).on("value", snap=>{
+  db.ref("users/" + uid).once("value", snap=>{
     const val = snap.val();
     if(!val) return;
 
-    data = val.data || [];
-    notifHistory = val.notifHistory || [];
-    budgets = val.budgets || {};
-    saldoManual = val.saldoManual || 0;
+    data = val.data || data;
+    notifHistory = val.notifHistory || notifHistory;
+    budgets = val.budgets || budgets;
+    saldoManual = val.saldoManual || saldoManual;
 
-    render(); // fungsi UI kamu
+    render();
   });
 }
 
@@ -1859,6 +1853,7 @@ function tambah(){
   closeModal();
   render();
   generateInsight();
+  saveDataCloud();
 
   // RESET STATE (INI PENTING)
   selectedTipe = "masuk";
@@ -2234,11 +2229,14 @@ function deleteNotif(time){
     }
     openHistory();
   },300);
+  
+  saveDataCloud();
 }
 
 function clearNotif(){
   notifHistory = [];
   localStorage.removeItem("notifHistory");
+  saveDataCloud();
   openHistory();
 }
 
