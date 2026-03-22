@@ -630,6 +630,7 @@ function openModal(type){
   document.getElementById("modalContent").innerHTML=html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+  setTimeout(renderIcons,100);
 }
 
 /* DROPDOWN */
@@ -986,6 +987,8 @@ html += `
     }
   });
 },100);
+
+setTimeout(renderIcons,100);
 }
 
 function enableSwipeReveal(el){
@@ -1526,6 +1529,7 @@ function renderDashboardHome(){
   setTimeout(()=>{
     drawChart("miniChart");
   },100);
+  setTimeout(renderIcons,100);
 }
 
 function generateInsightText(masuk, keluar, kategori, saldo){
@@ -1568,6 +1572,12 @@ function generateInsightText(masuk, keluar, kategori, saldo){
   return html;
 }
 
+function renderIcons(){
+  if(window.feather){
+    feather.replace();
+  }
+}
+
 document.addEventListener("click", function(e){
   if(!e.target.closest(".select")){
     document.querySelectorAll(".options").forEach(o=>{
@@ -1589,6 +1599,7 @@ document.addEventListener("input", function(e){
 });
 
 render();
+renderIcons();
 </script>
 
 </body>
