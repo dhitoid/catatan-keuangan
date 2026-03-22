@@ -264,14 +264,19 @@ button:active{
 }
 
 /* handle atas */
-.modal::before{
-  content:"";
-  display:block;
+.modal-handle{
   width:50px;
   height:5px;
   background:#cbd5e1;
   border-radius:10px;
   margin:0 auto 12px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+
+.modal-handle:active{
+  transform:scale(0.9);
+  background:#94a3b8;
 }
 
 /* header */
@@ -643,6 +648,7 @@ svg {
 
 <!-- MODAL -->
 <div id="modal" class="modal">
+  <div class="modal-handle" onclick="closeModal()"></div>
   <div id="modalContent"></div>
 </div>
 
@@ -754,38 +760,37 @@ function animateSaldo(target){
 
 /* FILTER */
 function applyFilter(arr){
+
   let search = document.getElementById("search")?.value.toLowerCase() || "";
-  let bulan = document.getElementById("filterBulan")?.value;
   let tanggal = document.getElementById("filterTanggal")?.value;
-  
-  if(selectedMonth){
-  let dBulan = new Date(d.time).getMonth()+1;
-  if(dBulan !== selectedMonth) return false;
-  }
-  
-  if(selectedYear){
-    let dYear = new Date(d.time).getFullYear();
-    if(dYear !== selectedYear) return false;
-  }
 
   return arr.filter(d=>{
-    let text = (d.ket + " " + (d.kategori||"")).toLowerCase();
 
+    let text = (d.ket + " " + (d.kategori||"")).toLowerCase();
     let matchSearch = text.includes(search);
 
-    let matchBulan = true;
-    if(bulan){
-      let dBulan = new Date(d.time).toISOString().slice(0,7);
-      matchBulan = dBulan === bulan;
+    // ✅ FILTER BULAN (FIX)
+    let matchMonth = true;
+    if(selectedMonth){
+      let dBulan = new Date(d.time).getMonth() + 1;
+      matchMonth = dBulan === selectedMonth;
     }
 
+    // ✅ FILTER TAHUN (FIX)
+    let matchYear = true;
+    if(selectedYear){
+      let dYear = new Date(d.time).getFullYear();
+      matchYear = dYear === selectedYear;
+    }
+
+    // ✅ FILTER TANGGAL
     let matchTanggal = true;
     if(tanggal){
       let dTgl = new Date(d.time).toISOString().slice(0,10);
       matchTanggal = dTgl === tanggal;
     }
 
-    return matchSearch && matchBulan && matchTanggal;
+    return matchSearch && matchMonth && matchYear && matchTanggal;
   });
 }
 
@@ -1084,10 +1089,27 @@ function toggleList(){
 
     <div id="mutasiContent"></div>
   `;
+  
+  selectedMonth = new Date().getMonth() + 1;
+  selectedYear = new Date().getFullYear();
 
   document.getElementById("modalContent").innerHTML = html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+  
+  setTimeout(()=>{
+  document.querySelectorAll(".month-item").forEach((el,i)=>{
+    if(i+1 === selectedMonth){
+      el.classList.add("active");
+    }
+  });
+
+  document.querySelectorAll(".year-item").forEach(el=>{
+    if(Number(el.innerText) === selectedYear){
+      el.classList.add("active");
+    }
+  });
+},100);
 
   renderMutasiModal();
   setTimeout(renderIcons, 100);
