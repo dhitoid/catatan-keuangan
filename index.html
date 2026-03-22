@@ -732,6 +732,33 @@ svg {
     font-size: 16px;
   }
 }
+
+.calc-history{
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 14px;
+
+  background: rgba(15, 23, 42, 0.6);
+  color: #cbd5f5;
+  font-size: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calc-history-item{
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.calc-history-item:hover{
+  background: rgba(255,255,255,0.08);
+}
 </style>
 </head>
 
@@ -829,15 +856,18 @@ let selectedMonth = null;
 let selectedYear = null;
 let selectedBudgetKategori = null;
 let calcInput = "";
+let calcHistory = [];
 
 function openCalculator(){
 
   let html = `
-  <div class="modal-header">Kalkulator</div>
-
-  <div id="calcDisplay" class="calc-display">0</div>
-
-  <div class="calc-buttons">
+    <div class="modal-header">Kalkulator</div>
+    
+    <div id="calcDisplay" class="calc-display">0</div>
+    
+    <div id="calcHistory" class="calc-history"></div>
+    
+    <div class="calc-buttons">
     <button class="calc-btn clear" onclick="calcClear()">C</button>
     <button class="calc-btn" onclick="calcDelete()">⌫</button>
     <button class="calc-btn op" onclick="calcInputValue('%')">%</button>
@@ -869,6 +899,25 @@ function openCalculator(){
   document.getElementById("backdrop").classList.add("active");
 
   calcInput = "";
+}
+
+function updateHistory(){
+  const el = document.getElementById("calcHistory");
+  if(!el) return;
+
+  el.innerHTML = calcHistory.map(item => `
+    <div class="calc-history-item" onclick="useHistory('${item.result}')">
+      ${item.expr} = <b>${item.result}</b>
+    </div>
+  `).join("");
+
+  // auto scroll ke bawah
+  el.scrollTop = el.scrollHeight;
+}
+
+function useHistory(val){
+  calcInput = val.replace(/\./g,"").replace(/,/g,",");
+  updateCalcDisplay();
 }
 
 function formatNumber(num){
@@ -942,15 +991,28 @@ function parseExpression(expr){
 function calcResult(){
   try{
     let parsed = parseExpression(calcInput);
-
     let result = eval(parsed);
 
-    // bulatkan biar rapi (hindari 0.30000004)
     result = Number(result.toFixed(10));
 
-    calcInput = result.toString().replace(/\./g, ",");
+    let formattedResult = result.toString().replace(/\./g, ",");
+
+    // simpan ke history
+    calcHistory.push({
+      expr: formatNumber(calcInput),
+      result: formatNumber(formattedResult)
+    });
+
+    // batasi history (max 20 biar ringan)
+    if(calcHistory.length > 20){
+      calcHistory.shift();
+    }
+
+    calcInput = formattedResult;
 
     updateCalcDisplay();
+    updateHistory();
+
   }catch{
     calcInput = "";
     updateCalcDisplay();
