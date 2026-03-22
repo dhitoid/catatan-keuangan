@@ -348,21 +348,25 @@ canvas{
   display:block;
 }
 
-.icon i{
+.icon svg{
   width:24px;
   height:24px;
 }
 
-.options i{
+.options svg{
   width:16px;
   height:16px;
   margin-right:6px;
   vertical-align:middle;
 }
 
-.item i{
+.item svg{
   width:20px;
   height:20px;
+}
+
+svg {
+  stroke-width: 2;
 }
 </style>
 </head>
@@ -580,6 +584,7 @@ function renderMutasi(arr){
   }
 
   list.innerHTML = html;
+setTimeout(renderIcons, 50);
 }
 
 /* MODAL */
@@ -757,6 +762,7 @@ function toggleList(){
   document.getElementById("backdrop").classList.add("active");
 
   renderMutasiModal();
+  setTimeout(renderIcons, 100);
 }
 
 function renderMutasiModal(){
@@ -800,6 +806,7 @@ function renderMutasiModal(){
   }
 
   document.getElementById("mutasiContent").innerHTML = html;
+setTimeout(renderIcons, 50);
 }
 
 function resetData(){
@@ -1325,12 +1332,9 @@ function drawChart(canvasId){
   const dpr = window.devicePixelRatio || 1;
   const width = rect.width;
   const height = rect.height || 160;
-
+  
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.scale(dpr, dpr);
-
-  const width = rect.width;
-  const height = rect.height;
 
   let activeIndex = -1;
 
@@ -1574,7 +1578,9 @@ function generateInsightText(masuk, keluar, kategori, saldo){
 
 function renderIcons(){
   if(window.feather){
-    feather.replace();
+    setTimeout(() => {
+      feather.replace();
+    }, 0);
   }
 }
 
