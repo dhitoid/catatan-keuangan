@@ -618,6 +618,56 @@ svg {
   padding:2px 6px;
   border-radius:10px;
 }
+/* ============================= */
+/* CALCULATOR (APPLE STYLE) */
+/* ============================= */
+
+.calc-display{
+  background:#0f172a;
+  color:white;
+  font-size:32px;
+  text-align:right;
+  padding:20px;
+  border-radius:18px;
+  margin-bottom:12px;
+  overflow-x:auto;
+}
+
+.calc-buttons{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+.calc-btn{
+  padding:18px;
+  border-radius:16px;
+  font-size:18px;
+  font-weight:600;
+  border:none;
+  background:#f1f5f9;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.calc-btn:active{
+  transform:scale(0.92);
+}
+
+.calc-btn.op{
+  background:#1d9bf0;
+  color:white;
+}
+
+.calc-btn.equal{
+  background:#22c55e;
+  color:white;
+}
+
+.calc-btn.clear{
+  background:#ef4444;
+  color:white;
+}
 </style>
 </head>
 
@@ -651,14 +701,10 @@ svg {
     <div class="icon"><i data-feather="plus-circle"></i></div>
     Transaksi
   </div>
-  <div class="menu-item" onclick="toggleList()">
-    <div class="icon"><i data-feather="file-text"></i></div>
-    Mutasi
+  <div class="menu-item" onclick="openCalculator()">
+    <div class="icon"><i data-feather="hash"></i></div>
+    Kalkulator
   </div>
-  <!-- <div class="menu-item" onclick="openHistory()">
-    <div class="icon"><i data-feather="bell"></i></div>
-    Notif
-  </div> -->
   <div class="menu-item" onclick="openBudget()">
     <div class="icon"><i data-feather="sliders"></i></div>
     Budget
@@ -666,6 +712,10 @@ svg {
   <div class="menu-item" onclick="openDashboard()">
     <div class="icon"><i data-feather="bar-chart-2"></i></div>
     AI Insight
+  </div>
+  <div class="menu-item" onclick="toggleList()">
+    <div class="icon"><i data-feather="file-text"></i></div>
+    Mutasi
   </div>
   <div class="menu-item" onclick="resetData()">
     <div class="icon"><i data-feather="refresh-ccw"></i></div>
@@ -714,6 +764,80 @@ let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
 let selectedMonth = null;
 let selectedYear = null;
 let selectedBudgetKategori = null;
+let calcInput = "";
+
+function openCalculator(){
+
+  let html = `
+  <div class="modal-header">Kalkulator</div>
+
+  <div id="calcDisplay" class="calc-display">0</div>
+
+  <div class="calc-buttons">
+    <button class="calc-btn clear" onclick="calcClear()">C</button>
+    <button class="calc-btn" onclick="calcDelete()">⌫</button>
+    <button class="calc-btn op" onclick="calcInputValue('%')">%</button>
+    <button class="calc-btn op" onclick="calcInputValue('/')">÷</button>
+
+    <button class="calc-btn" onclick="calcInputValue('7')">7</button>
+    <button class="calc-btn" onclick="calcInputValue('8')">8</button>
+    <button class="calc-btn" onclick="calcInputValue('9')">9</button>
+    <button class="calc-btn op" onclick="calcInputValue('*')">×</button>
+
+    <button class="calc-btn" onclick="calcInputValue('4')">4</button>
+    <button class="calc-btn" onclick="calcInputValue('5')">5</button>
+    <button class="calc-btn" onclick="calcInputValue('6')">6</button>
+    <button class="calc-btn op" onclick="calcInputValue('-')">−</button>
+
+    <button class="calc-btn" onclick="calcInputValue('1')">1</button>
+    <button class="calc-btn" onclick="calcInputValue('2')">2</button>
+    <button class="calc-btn" onclick="calcInputValue('3')">3</button>
+    <button class="calc-btn op" onclick="calcInputValue('+')">+</button>
+
+    <button class="calc-btn" onclick="calcInputValue('0')">0</button>
+    <button class="calc-btn" onclick="calcInputValue('.')">.</button>
+    <button class="calc-btn equal" style="grid-column: span 2;" onclick="calcResult()">=</button>
+  </div>
+  `;
+
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+
+  calcInput = "";
+}
+
+function updateCalcDisplay(){
+  const el = document.getElementById("calcDisplay");
+  el.innerText = calcInput || "0";
+}
+
+function calcInputValue(val){
+  calcInput += val;
+  updateCalcDisplay();
+}
+
+function calcClear(){
+  calcInput = "";
+  updateCalcDisplay();
+}
+
+function calcDelete(){
+  calcInput = calcInput.slice(0, -1);
+  updateCalcDisplay();
+}
+
+function calcResult(){
+  try{
+    let result = eval(calcInput.replace(/÷/g,"/").replace(/×/g,"*"));
+    calcInput = result.toString();
+    updateCalcDisplay();
+  }catch{
+    calcInput = "";
+    updateCalcDisplay();
+    showToast("Perhitungan error","error");
+  }
+}
 
 function toggleKategoriBudget(){
   document.getElementById("dropdownKatBudget").classList.toggle("show");
