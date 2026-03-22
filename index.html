@@ -614,7 +614,7 @@ svg {
   <div class="menu">
   <div class="menu-item" onclick="openModal('saldo')">
     <div class="icon"><i data-feather="credit-card"></i></div>
-    Saldo
+    Top Up
   </div>
   <div class="menu-item" onclick="openModal('transaksi')">
     <div class="icon"><i data-feather="plus-circle"></i></div>
@@ -867,7 +867,7 @@ function openModal(type){
 
   if(type==="saldo"){
     html=`
-    <h3>Tambah Saldo</h3>
+    <div class="modal-header">Top Up Saldo</div>
     <input id="saldoInput" type="text" placeholder="Nominal" inputmode="numeric">
     <button onclick="tambahSaldo()">Simpan</button>`;
   }
@@ -987,10 +987,21 @@ function tambahSaldo(){
     return;
   }
 
-  saldoManual += n;
-  localStorage.setItem("saldoManual", saldoManual);
+  // ✅ MASUKKAN KE DATA TRANSAKSI
+  data.push({
+    nominal: n,
+    ket: "Top Up Saldo",
+    tipe: "masuk",
+    kategori: "topup",
+    time: new Date().toISOString()
+  });
 
-  showToast("Saldo berhasil ditambahkan 💰","success", n, "masuk", "Top Up Saldo");
+  localStorage.setItem("data", JSON.stringify(data));
+
+  // ❌ HAPUS INI (biar tidak double)
+  // saldoManual += n;
+
+  showToast("Top Up berhasil 💰","success", n, "masuk", "Top Up Saldo");
 
   closeModal();
   render();
