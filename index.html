@@ -128,6 +128,22 @@ body{
 }
 .backdrop.active{display:block;}
 
+/* BUTTON */
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
+  color:white;
+  font-weight:600;
+  font-size:14px;
+}
+
+button:active{
+  transform:scale(0.97);
+}
+
 /* MODAL */
 .modal{
   position:fixed;
@@ -135,9 +151,11 @@ body{
   width:100%;
   background:white;
   padding:20px;
-  border-radius:20px 20px 0 0;
+  border-radius:25px 25px 0 0;
   transition:0.3s;
+  box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 }
+
 .modal.active{bottom:0;}
 
 .modal input{
@@ -218,6 +236,58 @@ body{
   from{opacity:0; transform:translateY(10px);}
   to{opacity:1; transform:translateY(0);}
 }
+
+/* TOAST NOTIFICATION */
+#toast-container{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.toast{
+  min-width:250px;
+  max-width:90vw;
+  padding:14px 16px;
+  border-radius:14px;
+  color:white;
+  font-size:14px;
+  font-weight:500;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  animation:slideDown 0.4s ease;
+}
+
+/* VARIANT */
+.toast.success{background:#16a34a;}
+.toast.error{background:#dc2626;}
+.toast.info{background:#0f5ea8;}
+
+/* ANIMATION */
+@keyframes slideDown{
+  from{
+    opacity:0;
+    transform:translateY(-20px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+.toast.hide{
+  animation:fadeOut 0.4s forwards;
+}
+
+@keyframes fadeOut{
+  to{
+    opacity:0;
+    transform:translateY(-20px);
+  }
+}
 </style>
 </head>
 
@@ -278,6 +348,8 @@ body{
 <div id="modal" class="modal">
   <div id="modalContent"></div>
 </div>
+
+<div id="toast-container"></div>
 
 <script>
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
@@ -484,8 +556,13 @@ function setKategori(val){
 function tambahSaldo(){
   vibrate();
   let n = Number(document.getElementById("saldoInput").value);
+    if(!n || n <= 0){
+    showToast("Nominal saldo tidak valid","error");
+    return;
+    )
   saldoManual += n;
   localStorage.setItem("saldoManual", saldoManual);
+  showToast("Saldo berhasil ditambahkan 💰","success");
   closeModal();
   render();
 }
@@ -497,22 +574,22 @@ function tambah(){
 
   // VALIDASI WAJIB
   if(!nominal || nominal <= 0){
-    alert("Nominal harus diisi dengan benar");
+    showToast("Nominal harus benar","error");
     return;
   }
 
   if(!ket){
-    alert("Keterangan wajib diisi");
+    showToast("Keterangan wajib diisi","error");
     return;
   }
 
   if(!selectedTipe){
-    alert("Pilih tipe transaksi");
+    showToast("Pilih tipe transaksi","error");
     return;
   }
 
   if(!selectedKategori){
-    alert("Pilih kategori");
+    showToast("Pilih kategori","error");
     return;
   }
 
@@ -526,6 +603,13 @@ function tambah(){
 
   localStorage.setItem("data", JSON.stringify(data));
 
+  // NOTIF BERBEDA
+  if(selectedTipe === "masuk"){
+    showToast("Pemasukan berhasil ditambahkan 💸","success");
+  }else{
+    showToast("Pengeluaran tercatat ⚠️","error");
+  }
+  
   closeModal();
   render();
 
@@ -547,7 +631,8 @@ function toggleList(){
 function resetData(){
   if(confirm("Yakin mau reset semua data?")){
     localStorage.clear();
-    location.reload();
+    showToast("Data berhasil direset","info");
+    setTimeout(()=>location.reload(),1000);
   }
 }
 
@@ -558,6 +643,21 @@ function toggleSaldo(){
 
 function vibrate(){
   if(navigator.vibrate) navigator.vibrate(30);
+}
+
+function showToast(message, type="info"){
+  const container = document.getElementById("toast-container");
+  new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3").play();
+  const toast = document.createElement("div");
+  toast.className = "toast " + type;
+  toast.innerText = message;
+
+  container.appendChild(toast);
+
+  setTimeout(()=>{
+    toast.classList.add("hide");
+    setTimeout(()=>toast.remove(),400);
+  },2500);
 }
 
 document.addEventListener("click", function(e){
