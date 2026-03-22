@@ -942,6 +942,22 @@ const auth = firebase.auth();
 const db = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
 
+auth.getRedirectResult()
+  .then((result) => {
+    if (result.user) {
+      currentUser = result.user;
+
+      updateUserUI(result.user);
+      loadUserProfile(result.user.uid);
+      loadDataCloud(result.user.uid);
+
+      document.getElementById("loginBtn").style.display = "none";
+    }
+  })
+  .catch((error) => {
+    console.error("Redirect error:", error);
+  });
+
 let currentUser = null;
 
 auth.onAuthStateChanged(user => {
