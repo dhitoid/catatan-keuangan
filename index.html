@@ -759,6 +759,46 @@ svg {
 .calc-history-item:hover{
   background: rgba(255,255,255,0.08);
 }
+
+.calc-history-item{
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.history-content{
+  background: rgba(255,255,255,0.05);
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: transform 0.2s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.history-delete{
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 70px;
+
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+}
+
+.calc-history-item.removing{
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: 0.3s;
+}
 </style>
 </head>
 
@@ -905,14 +945,79 @@ function updateHistory(){
   const el = document.getElementById("calcHistory");
   if(!el) return;
 
-  el.innerHTML = calcHistory.map(item => `
-    <div class="calc-history-item" onclick="useHistory('${item.result}')">
-      ${item.expr} = <b>${item.result}</b>
+  el.innerHTML = calcHistory.map((item, index) => `
+    <div class="calc-history-item" data-index="${index}">
+      <div class="history-content">
+        ${item.expr} = <b>${item.result}</b>
+      </div>
+      <div class="history-delete">Hapus</div>
     </div>
   `).join("");
 
-  // auto scroll ke bawah
   el.scrollTop = el.scrollHeight;
+
+  initSwipeEvents();
+}
+
+function initSwipeEvents(){
+  const items = document.querySelectorAll(".calc-history-item");
+
+  items.forEach(item => {
+    let startX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+
+    const content = item.querySelector(".history-content");
+    const index = item.getAttribute("data-index");
+
+    item.addEventListener("touchstart", (e)=>{
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+    });
+
+    item.addEventListener("touchmove", (e)=>{
+      if(!isSwiping) return;
+
+      currentX = e.touches[0].clientX;
+      let diff = currentX - startX;
+
+      if(diff < 0){ // swipe kiri
+        content.style.transform = `translateX(${diff}px)`;
+      }
+    });
+
+    item.addEventListener("touchend", ()=>{
+      isSwiping = false;
+
+      let diff = currentX - startX;
+
+      if(diff < -60){
+        // hapus item
+        deleteHistory(index);
+      }else{
+        content.style.transform = "translateX(0)";
+      }
+    });
+
+    // klik normal → pakai history
+    content.addEventListener("click", ()=>{
+      useHistory(calcHistory[index].result);
+    });
+  });
+}
+
+function deleteHistory(index){
+  const items = document.querySelectorAll(".calc-history-item");
+  const el = items[index];
+
+  if(el){
+    el.classList.add("removing");
+
+    setTimeout(()=>{
+      calcHistory.splice(index, 1);
+      updateHistory();
+    }, 250);
+  }
 }
 
 function useHistory(val){
