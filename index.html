@@ -808,6 +808,51 @@ svg {
   height:35px;
   border-radius:50%;
 }
+
+.top-header{
+  position:absolute;
+  top:20px;
+  left:20px;
+  right:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:10;
+}
+
+.top-header .left,
+.top-header .right{
+  display:flex;
+  gap:10px;
+}
+
+#loginBtn,
+#profileBtn,
+#notifBtn{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+#loginBtn,
+#notifBtn{
+  background:rgba(255,255,255,0.2);
+  backdrop-filter:blur(10px);
+}
+
+#profileBtn{
+  overflow:hidden;
+}
+
+#profileBtn img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 </style>
 </head>
 
@@ -815,53 +860,29 @@ svg {
 
 <div class="home">
   
-  <div id="notifBtn" onclick="openHistory()">
-    <i data-feather="bell"></i>
-    <span id="notifBadge"></span>
-  </div>
-  
-  <div class="profile-icon" onclick="openProfileModal()">
-    <img id="userPhoto" src="">
-  </div>
-  
-  <div id="topNav" style="
-  position:absolute;
-  top:20px;
-  left:20px;
-  display:flex;
-  gap:10px;
-  z-index:10;
-">
+<div class="top-header">
 
-  <!-- LOGIN BUTTON -->
-  <div id="loginBtn" onclick="loginGoogle()" style="
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.2);
-    backdrop-filter:blur(10px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-  ">
-    <i data-feather="log-in"></i>
+  <!-- LEFT -->
+  <div class="left">
+    <div id="loginBtn" onclick="loginGoogle()">
+      <i data-feather="log-in"></i>
+    </div>
+
+    <div id="profileBtn" onclick="openProfileModal()">
+      <img id="userPhoto">
+    </div>
   </div>
 
-  <!-- PROFILE -->
-  <div id="profileBtn" onclick="openProfileModal()" style="
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    overflow:hidden;
-    display:none;
-    cursor:pointer;
-  ">
-    <img id="userPhoto" style="width:100%;height:100%;object-fit:cover;">
+  <!-- RIGHT -->
+  <div class="right">
+    <div id="notifBtn" onclick="openHistory()">
+      <i data-feather="bell"></i>
+      <span id="notifBadge"></span>
+    </div>
   </div>
 
 </div>
-  
+
 <div id="profileModal" class="modal">
 
   <div class="modal-handle" onclick="closeProfileModal()"></div>
@@ -900,7 +921,7 @@ svg {
 
   <div class="header">
     <h2 id="greeting"></h2>
-    <h1>NOUR MAANDHITO</h1>
+    <h1 id="headerName">User</h1>
   </div>
 
   <div class="card">
@@ -1033,7 +1054,7 @@ auth.onAuthStateChanged(user => {
 
   } else {
     currentUser = null;
-
+    document.getElementById("headerName").innerText = "Guest";
     document.getElementById("loginBtn").style.display = "block";
     document.getElementById("profileBtn").style.display = "none";
 
@@ -1066,6 +1087,7 @@ function updateUserUI(user){
   document.getElementById("userPhoto").src = user.photoURL;
   document.getElementById("profilePhoto").src = user.photoURL;
   document.getElementById("userName").innerText = user.displayName;
+  document.getElementById("headerName").innerText = user.displayName;
 
   document.getElementById("profileBtn").style.display = "block";
   document.getElementById("loginBtn").style.display = "none";
@@ -1077,6 +1099,8 @@ function loadUserProfile(uid){
 
     if(customName){
       document.getElementById("userName").innerText = customName;
+
+      document.getElementById("headerName").innerText = customName;
     }
   });
 }
