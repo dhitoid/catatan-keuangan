@@ -314,6 +314,41 @@ button:active{
   position:relative;
   overflow:hidden;
 }
+
+/* WRAPPER SWIPE */
+.swipe-item{
+  position:relative;
+  overflow:hidden;
+}
+
+/* DELETE BUTTON */
+.delete-btn{
+  position:absolute;
+  right:0;
+  top:0;
+  bottom:0;
+  width:80px;
+  background:#dc2626;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:600;
+  font-size:14px;
+  border-radius:0 12px 12px 0;
+}
+
+/* CONTENT */
+.swipe-content{
+  position:relative;
+  background:white;
+  z-index:2;
+}
+
+/* ANIMATION */
+.swipe-content{
+  transition:transform 0.25s ease;
+}
 </style>
 </head>
 
@@ -795,41 +830,48 @@ function openHistory(){
       icon = "💳";
     }
 
-    html += `
-      <div class="item" id="notif-${index}" style="align-items:flex-start;">
-      
-      <div style="display:flex;gap:10px;">
-        <div style="font-size:20px;">${icon}</div>
+html += `
+<div class="swipe-item">
 
-        <div>
-          <div style="font-size:14px;font-weight:500;">
-            ${n.message}
-          </div>
+  <div class="delete-btn" onclick="deleteNotif('${n.time}')">
+    Hapus
+  </div>
 
-          ${
-            n.ket
-            ? `<div style="font-size:12px;color:#64748b;">
-                ${n.ket}
-              </div>`
-            : ""
-          }
+  <div class="item swipe-content" id="notif-${n.time}" style="align-items:flex-start;">
+    
+    <div style="display:flex;gap:10px;">
+      <div style="font-size:20px;">${icon}</div>
 
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
-            ${formatTanggal(n.time)} • ${formatJam(n.time)}
-          </div>
+      <div>
+        <div style="font-size:14px;font-weight:500;">
+          ${n.message}
+        </div>
+
+        ${
+          n.ket
+          ? `<div style="font-size:12px;color:#64748b;">
+              ${n.ket}
+            </div>`
+          : ""
+        }
+
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+          ${formatTanggal(n.time)} • ${formatJam(n.time)}
         </div>
       </div>
-
-      ${
-        n.nominal
-        ? `<div style="color:${warna};font-weight:600;">
-            ${simbol}${rupiah(n.nominal)}
-          </div>`
-        : ""
-      }
-
     </div>
-    `;
+
+    ${
+      n.nominal
+      ? `<div style="color:${warna};font-weight:600;">
+          ${simbol}${rupiah(n.nominal)}
+        </div>`
+      : ""
+    }
+
+  </div>
+</div>
+`;
   });
 
   html += `<button onclick="clearNotif()">Hapus Semua</button>`;
@@ -839,13 +881,55 @@ function openHistory(){
   document.getElementById("backdrop").classList.add("active");
   
   setTimeout(()=>{
-  filtered.forEach((n, index)=>{
-    const el = document.getElementById(`notif-${index}`);
+  filtered.forEach(n=>{
+    const el = document.getElementById(`notif-${n.time}`);
     if(el){
-      enableSwipeDelete(el, n);
+      enableSwipeReveal(el);
     }
   });
 },100);
+}
+
+function enableSwipeReveal(el){
+  let startX = 0;
+  let currentX = 0;
+  let isDragging = false;
+
+  el.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  });
+
+  el.addEventListener("touchmove", e=>{
+    if(!isDragging) return;
+
+    currentX = e.touches[0].clientX - startX;
+
+    // hanya swipe ke kiri
+    if(currentX < 0){
+      el.style.transform = `translateX(${Math.max(currentX, -80)}px)`;
+    }
+  });
+
+  el.addEventListener("touchend", ()=>{
+    isDragging = false;
+
+    if(currentX < -40){
+      el.style.transform = "translateX(-80px)";
+    }else{
+      el.style.transform = "translateX(0)";
+    }
+  });
+}
+
+function deleteNotif(time){
+  const index = notifHistory.findIndex(n => n.time === time);
+
+  if(index !== -1){
+    notifHistory.splice(index,1);
+    localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
+    openHistory();
+  }
 }
 
 function clearNotif(){
