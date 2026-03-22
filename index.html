@@ -983,7 +983,20 @@ auth.onAuthStateChanged(user => {
 });
 
 function loginGoogle(){
-  auth.signInWithRedirect(provider);
+  auth.signInWithPopup(provider)
+    .then(result => {
+      currentUser = result.user;
+
+      updateUserUI(result.user);
+      loadUserProfile(result.user.uid);
+      loadDataCloud(result.user.uid);
+
+      document.getElementById("loginBtn").style.display = "none";
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Login gagal");
+    });
 }
 
 function updateUserUI(user){
@@ -1796,12 +1809,9 @@ function tambahSaldo(){
 }
 
 function saveDataCloud(){
-  if(!currentUser){
-  localStorage.setItem("data", JSON.stringify(data));
-  return;
-}
+  if(!currentUser) return;
 
-  db.ref("users/" + currentUser.uid).set({
+  db.ref("users/" + currentUser.uid).update({
     data,
     notifHistory,
     budgets,
@@ -1810,14 +1820,14 @@ function saveDataCloud(){
 }
 
 function loadDataCloud(uid){
-  db.ref("users/" + uid).once("value", snap=>{
+  db.ref("users/" + uid).on("value", snap=>{
     const val = snap.val();
     if(!val) return;
 
-    data = val.data || data;
-    notifHistory = val.notifHistory || notifHistory;
-    budgets = val.budgets || budgets;
-    saldoManual = val.saldoManual || saldoManual;
+    data = val.data || [];
+    notifHistory = val.notifHistory || [];
+    budgets = val.budgets || {};
+    saldoManual = val.saldoManual || 0;
 
     render();
   });
