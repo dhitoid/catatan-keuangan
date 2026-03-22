@@ -555,14 +555,19 @@ function setKategori(val){
 /* ACTION */
 function tambahSaldo(){
   vibrate();
+
   let n = Number(document.getElementById("saldoInput").value);
-    if(!n || n <= 0){
+
+  if(!n || n <= 0){
     showToast("Nominal saldo tidak valid","error");
     return;
-    )
+  }
+
   saldoManual += n;
   localStorage.setItem("saldoManual", saldoManual);
+
   showToast("Saldo berhasil ditambahkan 💰","success");
+
   closeModal();
   render();
 }
@@ -647,7 +652,12 @@ function vibrate(){
 
 function showToast(message, type="info"){
   const container = document.getElementById("toast-container");
-  new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3").play();
+
+  try{
+    const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3");
+    audio.play();
+  }catch(e){}
+
   const toast = document.createElement("div");
   toast.className = "toast " + type;
   toast.innerText = message;
