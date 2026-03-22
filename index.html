@@ -259,6 +259,17 @@ button:active{
   font-weight:500;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
   animation:slideDown 0.4s ease;
+  touch-action: pan-y;
+}
+
+/* SWIPE EFFECT */
+.toast.swiping{
+  transition:none;
+}
+
+.toast.removing{
+  opacity:0;
+  transform:translateX(120%);
 }
 
 /* VARIANT */
@@ -317,6 +328,9 @@ button:active{
     <div class="menu-item" onclick="toggleList()">
       <div class="icon">📄</div>Mutasi
     </div>
+    <div class="menu-item" onclick="openHistory()">
+      <div class="icon">🔔</div>Notif
+    </div>
     <div class="menu-item" onclick="resetData()">
       <div class="icon">♻️</div>Reset
     </div>
@@ -359,6 +373,7 @@ try{
 }catch{
   data = [];
 }
+let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = true;
 let selectedTipe="masuk";
 let selectedKategori="lainnya";
@@ -653,10 +668,14 @@ function vibrate(){
 function showToast(message, type="info"){
   const container = document.getElementById("toast-container");
 
-  try{
-    const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3");
-    audio.play();
-  }catch(e){}
+  // SAVE HISTORY
+  notifHistory.unshift({
+    message,
+    type,
+    time:new Date().toISOString()
+  });
+
+  localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
 
   const toast = document.createElement("div");
   toast.className = "toast " + type;
@@ -664,10 +683,86 @@ function showToast(message, type="info"){
 
   container.appendChild(toast);
 
+  // SOUND SAFE
+  try{
+    const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3");
+    audio.play();
+  }catch(e){}
+
+  // TAP CLOSE
+  toast.onclick = () => removeToast(toast);
+
+  // SWIPE LOGIC
+  let startX = 0;
+  let currentX = 0;
+  let isDragging = false;
+
+  toast.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  });
+
+  toast.addEventListener("touchmove", e=>{
+    if(!isDragging) return;
+    currentX = e.touches[0].clientX - startX;
+
+    toast.classList.add("swiping");
+    toast.style.transform = `translateX(${currentX}px)`;
+  });
+
+  toast.addEventListener("touchend", ()=>{
+    isDragging = false;
+    toast.classList.remove("swiping");
+
+    if(Math.abs(currentX) > 80){
+      removeToast(toast);
+    }else{
+      toast.style.transform = "";
+    }
+  });
+
+  // AUTO HIDE
   setTimeout(()=>{
-    toast.classList.add("hide");
-    setTimeout(()=>toast.remove(),400);
-  },2500);
+    removeToast(toast);
+  },3000);
+}
+
+function removeToast(toast){
+  toast.classList.add("removing");
+  setTimeout(()=>toast.remove(),300);
+}
+
+function openHistory(){
+  let html = `<h3>Riwayat Notifikasi</h3>`;
+
+  if(notifHistory.length === 0){
+    html += `<p style="font-size:14px;color:#64748b;">Belum ada notifikasi</p>`;
+  }
+
+  notifHistory.forEach(n=>{
+    html += `
+    <div class="item">
+      <div>
+        <div style="font-size:14px;">${n.message}</div>
+        <div style="font-size:11px;color:#64748b;">
+          ${formatTanggal(n.time)} • ${formatJam(n.time)}
+        </div>
+      </div>
+    </div>
+    `;
+  });
+
+  html += `<button onclick="clearNotif()">Hapus Semua</button>`;
+
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+}
+
+function clearNotif(){
+  notifHistory = [];
+  localStorage.removeItem("notifHistory");
+  openHistory();
 }
 
 document.addEventListener("click", function(e){
