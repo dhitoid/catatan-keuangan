@@ -316,12 +316,14 @@ button:active{
 }
 
 /* WRAPPER SWIPE */
+/* SWIPE CONTAINER */
 .swipe-item{
   position:relative;
-  overflow:hidden;
+  border-radius:12px;
+  margin-bottom:10px;
 }
 
-/* DELETE BUTTON */
+/* DELETE BUTTON (DI BELAKANG) */
 .delete-btn{
   position:absolute;
   right:0;
@@ -334,20 +336,22 @@ button:active{
   align-items:center;
   justify-content:center;
   font-weight:600;
-  font-size:14px;
-  border-radius:0 12px 12px 0;
+  border-radius:12px;
 }
 
-/* CONTENT */
+/* CONTENT (YANG DI GESER) */
 .swipe-content{
   position:relative;
   background:white;
+  border-radius:12px;
   z-index:2;
+  transition:transform 0.25s ease;
 }
 
-/* ANIMATION */
-.swipe-content{
-  transition:transform 0.25s ease;
+/* BIAR DALAMNYA TETAP RAPI */
+.swipe-content .item{
+  margin:0;
+  border-radius:12px;
 }
 </style>
 </head>
@@ -837,39 +841,42 @@ html += `
     Hapus
   </div>
 
-  <div class="item swipe-content" id="notif-${n.time}" style="align-items:flex-start;">
-    
-    <div style="display:flex;gap:10px;">
-      <div style="font-size:20px;">${icon}</div>
+  <div class="swipe-content" id="notif-${n.time}">
+    <div class="item" style="align-items:flex-start;">
+      
+      <div style="display:flex;gap:10px;">
+        <div style="font-size:20px;">${icon}</div>
 
-      <div>
-        <div style="font-size:14px;font-weight:500;">
-          ${n.message}
-        </div>
+        <div>
+          <div style="font-size:14px;font-weight:500;">
+            ${n.message}
+          </div>
 
-        ${
-          n.ket
-          ? `<div style="font-size:12px;color:#64748b;">
-              ${n.ket}
-            </div>`
-          : ""
-        }
+          ${
+            n.ket
+            ? `<div style="font-size:12px;color:#64748b;">
+                ${n.ket}
+              </div>`
+            : ""
+          }
 
-        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
-          ${formatTanggal(n.time)} • ${formatJam(n.time)}
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+            ${formatTanggal(n.time)} • ${formatJam(n.time)}
+          </div>
         </div>
       </div>
+
+      ${
+        n.nominal
+        ? `<div style="color:${warna};font-weight:600;">
+            ${simbol}${rupiah(n.nominal)}
+          </div>`
+        : ""
+      }
+
     </div>
-
-    ${
-      n.nominal
-      ? `<div style="color:${warna};font-weight:600;">
-          ${simbol}${rupiah(n.nominal)}
-        </div>`
-      : ""
-    }
-
   </div>
+
 </div>
 `;
   });
@@ -905,7 +912,7 @@ function enableSwipeReveal(el){
 
     currentX = e.touches[0].clientX - startX;
 
-    // hanya swipe ke kiri
+    // hanya ke kiri
     if(currentX < 0){
       el.style.transform = `translateX(${Math.max(currentX, -80)}px)`;
     }
@@ -914,6 +921,7 @@ function enableSwipeReveal(el){
   el.addEventListener("touchend", ()=>{
     isDragging = false;
 
+    // SNAP BEHAVIOR
     if(currentX < -40){
       el.style.transform = "translateX(-80px)";
     }else{
@@ -923,13 +931,23 @@ function enableSwipeReveal(el){
 }
 
 function deleteNotif(time){
-  const index = notifHistory.findIndex(n => n.time === time);
+  const el = document.getElementById(`notif-${time}`);
+  const wrapper = el?.closest(".swipe-item");
 
-  if(index !== -1){
-    notifHistory.splice(index,1);
-    localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
-    openHistory();
+  if(wrapper){
+    wrapper.style.transition = "0.3s";
+    wrapper.style.opacity = "0";
+    wrapper.style.transform = "translateX(100%)";
   }
+
+  setTimeout(()=>{
+    const index = notifHistory.findIndex(n => n.time === time);
+    if(index !== -1){
+      notifHistory.splice(index,1);
+      localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
+    }
+    openHistory();
+  },300);
 }
 
 function clearNotif(){
