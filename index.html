@@ -385,6 +385,9 @@ button:active{
     <div class="menu-item" onclick="openHistory()">
       <div class="icon">🔔</div>Notif
     </div>
+    <div class="menu-item" onclick="openDashboard()">
+      <div class="icon">📊</div>AI Insight
+    </div>
     <div class="menu-item" onclick="resetData()">
       <div class="icon">♻️</div>Reset
     </div>
@@ -1066,6 +1069,113 @@ function enableSwipeDelete(element, n){
       element.style.transform = "";
     }
   });
+}
+
+function openDashboard(){
+
+  let totalMasuk = 0;
+  let totalKeluar = 0;
+  let kategori = {};
+  let progress = Math.min((saldo / 1000000) * 100, 100);
+
+  data.forEach(d=>{
+    if(d.tipe === "masuk"){
+      totalMasuk += d.nominal;
+    }else{
+      totalKeluar += d.nominal;
+    }
+
+    if(!kategori[d.kategori]){
+      kategori[d.kategori] = 0;
+    }
+    kategori[d.kategori] += d.nominal;
+  });
+
+  // cari kategori terbesar
+  let topKategori = "-";
+  let max = 0;
+
+  for(let k in kategori){
+    if(kategori[k] > max){
+      max = kategori[k];
+      topKategori = k;
+    }
+  }
+
+  // saldo sekarang
+  let saldo = saldoManual;
+  data.forEach(d=>{
+    saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
+  });
+
+  let html = `
+  <h3>AI Finance Dashboard</h3>
+
+  <div style="margin-top:15px;">
+
+    <div class="card" style="margin:0 0 15px 0;">
+      <small>Saldo Sekarang</small>
+      <div class="saldo">${rupiah(saldo)}</div>
+    </div>
+
+    <div class="item">
+      <div>Total Pemasukan</div>
+      <div class="masuk">+${rupiah(totalMasuk)}</div>
+    </div>
+
+    <div class="item">
+      <div>Total Pengeluaran</div>
+      <div class="keluar">-${rupiah(totalKeluar)}</div>
+    </div>
+
+    <div class="item">
+      <div>Kategori Terbanyak</div>
+      <div>${topKategori}</div>
+    </div>
+
+  </div>
+  
+  <div style="margin:10px 0;">
+  <div style="height:8px;background:#e5e7eb;border-radius:10px;">
+    <div style="width:${progress}%;height:8px;background:#16a34a;border-radius:10px;"></div>
+  </div>
+</div>
+
+  <div style="margin-top:20px;">
+    <h4>🧠 Insight AI</h4>
+    ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
+  </div>
+  `;
+
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+}
+
+function generateInsightText(masuk, keluar, kategori, saldo){
+
+  let insight = "";
+
+  if(keluar > masuk){
+    insight += `<p style="color:#dc2626;">⚠️ Pengeluaran kamu lebih besar dari pemasukan</p>`;
+  }else{
+    insight += `<p style="color:#16a34a;">✅ Keuangan kamu masih aman</p>`;
+  }
+
+  if(kategori !== "-"){
+    insight += `<p>💸 Kamu paling sering menghabiskan uang di <b>${kategori}</b></p>`;
+  }
+
+  if(saldo < 50000){
+    insight += `<p style="color:#dc2626;">💀 Saldo kamu hampir habis</p>`;
+  }else if(saldo > 1000000){
+    insight += `<p style="color:#16a34a;">🔥 Saldo kamu sehat!</p>`;
+  }
+
+  // Rekomendasi AI
+  insight += `<p style="margin-top:10px;">💡 Saran: Kurangi pengeluaran di kategori ${kategori} dan coba menabung minimal 20% dari pemasukan.</p>`;
+
+  return insight;
 }
 
 document.addEventListener("click", function(e){
