@@ -619,54 +619,118 @@ svg {
   border-radius:10px;
 }
 /* ============================= */
-/* CALCULATOR (APPLE STYLE) */
+/* CALCULATOR (PREMIUM UI) */
 /* ============================= */
 
 .calc-display{
-  background:#0f172a;
-  color:white;
-  font-size:32px;
-  text-align:right;
-  padding:20px;
-  border-radius:18px;
-  margin-bottom:12px;
-  overflow-x:auto;
+  background: linear-gradient(145deg, #0f172a, #020617);
+  color: #fff;
+  font-size: 36px;
+  text-align: right;
+  padding: 22px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+
+  box-shadow: 
+    inset 0 2px 6px rgba(255,255,255,0.05),
+    0 10px 25px rgba(0,0,0,0.4);
+
+  letter-spacing: 1px;
 }
 
+/* GRID */
 .calc-buttons{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 12px;
 }
 
+/* BUTTON BASE */
 .calc-btn{
-  padding:18px;
-  border-radius:16px;
-  font-size:18px;
-  font-weight:600;
-  border:none;
-  background:#f1f5f9;
-  cursor:pointer;
-  transition:0.2s;
+  padding: 18px;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+
+  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+  color: #0f172a;
+
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.15),
+    inset 0 1px 2px rgba(255,255,255,0.7);
+
+  transition: all 0.15s ease;
 }
 
+/* HOVER */
+.calc-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 14px rgba(0,0,0,0.2),
+    inset 0 1px 2px rgba(255,255,255,0.8);
+}
+
+/* ACTIVE (TEKAN) */
 .calc-btn:active{
-  transform:scale(0.92);
+  transform: scale(0.92);
+  box-shadow: 
+    inset 0 3px 6px rgba(0,0,0,0.3);
 }
 
+/* OPERATOR */
 .calc-btn.op{
-  background:#1d9bf0;
-  color:white;
+  background: linear-gradient(145deg, #1d9bf0, #0284c7);
+  color: white;
+
+  box-shadow: 
+    0 4px 12px rgba(29,155,240,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.3);
 }
 
+/* EQUAL */
 .calc-btn.equal{
-  background:#22c55e;
-  color:white;
+  background: linear-gradient(145deg, #22c55e, #16a34a);
+  color: white;
+
+  box-shadow: 
+    0 4px 12px rgba(34,197,94,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.3);
 }
 
+/* CLEAR */
 .calc-btn.clear{
-  background:#ef4444;
-  color:white;
+  background: linear-gradient(145deg, #ef4444, #b91c1c);
+  color: white;
+
+  box-shadow: 
+    0 4px 12px rgba(239,68,68,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+/* SPECIAL DELETE */
+.calc-btn:nth-child(2){
+  background: linear-gradient(145deg, #f59e0b, #d97706);
+  color: white;
+
+  box-shadow: 
+    0 4px 12px rgba(245,158,11,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+/* RESPONSIVE (HP) */
+@media (max-width: 480px){
+  .calc-display{
+    font-size: 28px;
+    padding: 18px;
+  }
+
+  .calc-btn{
+    padding: 16px;
+    font-size: 16px;
+  }
 }
 </style>
 </head>
@@ -807,12 +871,39 @@ function openCalculator(){
   calcInput = "";
 }
 
+function formatNumber(num){
+  if(!num) return "0";
+
+  // pisahin angka & operator
+  let parts = num.split(/([+\-*/%])/g);
+
+  return parts.map(part => {
+    if(!isNaN(part) && part !== ""){
+      return Number(part).toLocaleString("id-ID");
+    }
+    return part;
+  }).join("");
+}
+
 function updateCalcDisplay(){
   const el = document.getElementById("calcDisplay");
-  el.innerText = calcInput || "0";
+  el.innerText = formatNumber(calcInput) || "0";
 }
 
 function calcInputValue(val){
+  const lastChar = calcInput.slice(-1);
+
+  if(["+", "-", "*", "/", "%"].includes(val)){
+    if(["+", "-", "*", "/", "%"].includes(lastChar)){
+      calcInput = calcInput.slice(0, -1);
+    }
+  }
+
+  if(val === "."){
+  let lastNumber = calcInput.split(/[\+\-\*\/]/).pop();
+  if(lastNumber.includes(".")) return;
+  }
+  
   calcInput += val;
   updateCalcDisplay();
 }
