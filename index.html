@@ -859,7 +859,7 @@ function openCalculator(){
     <button class="calc-btn op" onclick="calcInputValue('+')">+</button>
 
     <button class="calc-btn" onclick="calcInputValue('0')">0</button>
-    <button class="calc-btn" onclick="calcInputValue('.')">.</button>
+    <button class="calc-btn" onclick="calcInputValue(',')">,</button>
     <button class="calc-btn equal" style="grid-column: span 2;" onclick="calcResult()">=</button>
   </div>
   `;
@@ -874,12 +874,16 @@ function openCalculator(){
 function formatNumber(num){
   if(!num) return "0";
 
-  // pisahin angka & operator
   let parts = num.split(/([+\-*/%])/g);
 
   return parts.map(part => {
-    if(!isNaN(part) && part !== ""){
-      return Number(part).toLocaleString("id-ID");
+    if(!isNaN(part.replace(",", ".")) && part !== ""){
+      let number = part.replace(",", ".");
+      let [int, dec] = number.split(".");
+
+      let formatted = Number(int).toLocaleString("id-ID");
+
+      return dec ? formatted + "," + dec : formatted;
     }
     return part;
   }).join("");
@@ -893,17 +897,19 @@ function updateCalcDisplay(){
 function calcInputValue(val){
   const lastChar = calcInput.slice(-1);
 
+  // prevent double operator
   if(["+", "-", "*", "/", "%"].includes(val)){
     if(["+", "-", "*", "/", "%"].includes(lastChar)){
       calcInput = calcInput.slice(0, -1);
     }
   }
 
-  if(val === "."){
-  let lastNumber = calcInput.split(/[\+\-\*\/]/).pop();
-  if(lastNumber.includes(".")) return;
+  // prevent double koma dalam 1 angka
+  if(val === ","){
+    let lastNumber = calcInput.split(/[\+\-\*\/]/).pop();
+    if(lastNumber.includes(",")) return;
   }
-  
+
   calcInput += val;
   updateCalcDisplay();
 }
@@ -918,10 +924,32 @@ function calcDelete(){
   updateCalcDisplay();
 }
 
+function parseExpression(expr){
+  if(!expr) return "0";
+
+  // hapus titik ribuan
+  expr = expr.replace(/\./g, "");
+
+  // ubah koma jadi titik desimal
+  expr = expr.replace(/,/g, ".");
+
+  // ubah persen jadi pembagian 100
+  expr = expr.replace(/(\d+(\.\d+)?)%/g, "($1/100)");
+
+  return expr;
+}
+
 function calcResult(){
   try{
-    let result = eval(calcInput.replace(/÷/g,"/").replace(/×/g,"*"));
-    calcInput = result.toString();
+    let parsed = parseExpression(calcInput);
+
+    let result = eval(parsed);
+
+    // bulatkan biar rapi (hindari 0.30000004)
+    result = Number(result.toFixed(10));
+
+    calcInput = result.toString().replace(/\./g, ",");
+
     updateCalcDisplay();
   }catch{
     calcInput = "";
@@ -1075,7 +1103,7 @@ function renderBudgetUI(){
           ${Math.round(percent)}% • ${rupiah(used)} / ${rupiah(limit)}
         </div> 
       </div>
-      <div style="font-size:11px;color:${color};margin-top:4px;">
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">
         ${status}
       </div>
 
