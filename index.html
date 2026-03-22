@@ -1180,7 +1180,7 @@ function openDashboard(){
     <div class="card" style="margin:0 0 15px 0;">
       <small>Saldo Sekarang</small>
       <div class="saldo">${rupiah(saldo)}</div>
-      <canvas id="mainChart" height="180" style="margin:15px 0;"></canvas>
+      <canvas id="mainChart" style="height:180px;width:100%;display:block;"></canvas>
     </div>
 
     <div class="item">
@@ -1279,9 +1279,11 @@ function drawChart(canvasId){
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  // ✅ FIX DPI
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
 
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);
 
   const width = rect.width;
@@ -1293,16 +1295,28 @@ function drawChart(canvasId){
 
   let max = Math.max(...masuk, ...keluar, 1000);
 
-  const padding = 20;
+  const padding = 30;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
 
   const stepX = chartWidth / ((labels.length - 1) || 1);
 
-  function drawSmoothLine(data, color){
+  // 🔥 GRID (BANK STYLE)
+  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.lineWidth = 1;
+
+  for(let i=0;i<4;i++){
+    let y = padding + (chartHeight/3)*i;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+
+  function drawLine(data, color){
     ctx.beginPath();
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
 
     data.forEach((val,i)=>{
       const x = padding + i * stepX;
@@ -1311,17 +1325,17 @@ function drawChart(canvasId){
       if(i === 0){
         ctx.moveTo(x,y);
       }else{
-        const prevX = padding + (i-1)*stepX;
-        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
-
-        const cx = (prevX + x)/2;
-
-        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
-        ctx.quadraticCurveTo(x, y, x, y);
+        ctx.lineTo(x,y);
       }
     });
 
     ctx.stroke();
+
+    // 🔥 GLOW EFFECT
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // DOT
     data.forEach((val,i)=>{
@@ -1329,14 +1343,14 @@ function drawChart(canvasId){
       const y = padding + chartHeight - (val / max * chartHeight);
 
       ctx.beginPath();
-      ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.arc(x,y,4,0,Math.PI*2);
       ctx.fillStyle = color;
       ctx.fill();
     });
   }
 
-  drawSmoothLine(masuk, "#16a34a");
-  drawSmoothLine(keluar, "#dc2626");
+  drawLine(masuk, "#22c55e"); // hijau
+  drawLine(keluar, "#ef4444"); // merah
 }
 
 function renderDashboardHome(){
@@ -1372,7 +1386,7 @@ let html = `
 <div class="card" style="margin:0;">
   <small>AI Insight</small>
 
-  <canvas id="miniChart" style="height:160px;width:100%;"></canvas>
+  <canvas id="miniChart" style="height:160px;width:100%;display:block;"></canvas>
 
   <div style="margin-top:10px;font-size:14px;line-height:1.5;">
     ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
