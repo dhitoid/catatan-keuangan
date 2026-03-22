@@ -694,6 +694,7 @@ svg {
 </div>
 
 <script>
+let lastBudgetReset = localStorage.getItem("lastBudgetReset") || null;
 let budgets = JSON.parse(localStorage.getItem("budgets")) || {};
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data;
@@ -795,6 +796,24 @@ function getMonthlyUsage(){
   return usage;
 }
 
+function checkMonthlyBudgetReset(){
+  const now = new Date();
+  const currentMonth = now.getFullYear() + "-" + (now.getMonth()+1);
+
+  if(lastBudgetReset !== currentMonth){
+
+    // RESET SEMUA BUDGET
+    budgets = {};
+    localStorage.setItem("budgets", JSON.stringify(budgets));
+
+    // UPDATE LAST RESET
+    lastBudgetReset = currentMonth;
+    localStorage.setItem("lastBudgetReset", currentMonth);
+
+    showToast("🔄 Budget bulan baru direset otomatis","info");
+  }
+}
+
 function renderBudgetUI(){
 
   let usage = getMonthlyUsage();
@@ -888,8 +907,14 @@ function openBudget(){
   </div>
 
   <input id="budgetNominal" type="text" placeholder="Nominal" inputmode="numeric">
-
+  
   <button onclick="saveBudget()">Simpan</button>
+  <button onclick="resetBudgetManual()" style="
+  margin-top:10px;
+  background:#ef4444;
+">
+  Reset Semua Budget
+</button>
   `;
 
   document.getElementById("modalContent").innerHTML = html;
@@ -907,6 +932,18 @@ function saveBudget(){
 
   setBudget(selectedBudgetKategori, nominal);
   closeModal();
+}
+
+function resetBudgetManual(){
+  if(!confirm("Yakin mau reset semua budget?")) return;
+
+  budgets = {};
+  localStorage.setItem("budgets", JSON.stringify(budgets));
+
+  showToast("🗑️ Budget berhasil direset","info");
+
+  closeModal();
+  renderDashboardHome();
 }
 
 /* FORMAT */
@@ -2333,6 +2370,7 @@ document.addEventListener("input", function(e){
   }
 });
 
+checkMonthlyBudgetReset();
 render();
 renderIcons();
 </script>
