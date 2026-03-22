@@ -355,6 +355,10 @@ button:active{
   margin:0;
   border-radius:12px;
 }
+
+input, select, textarea {
+  font-size:16px !important;
+}
 </style>
 </head>
 
@@ -394,16 +398,6 @@ button:active{
       <div class="icon">♻️</div>Reset
     </div>
   </div>
-<!--
-<div class="filter-box">
-  <input id="search" placeholder="🔍 Cari transaksi..." oninput="render()">
-
-  <div class="filter-row">
-    <input type="month" id="filterBulan" onchange="render()">
-    <input type="date" id="filterTanggal" onchange="render()">
-  </div>
-</div>
--->
 
 <div id="dashboardHome" style="margin:20px;"></div>
 
@@ -577,14 +571,14 @@ function openModal(type){
   if(type==="saldo"){
     html=`
     <h3>Tambah Saldo</h3>
-    <input id="saldoInput" type="number">
+    <input id="saldoInput" inputmode="numeric" pattern="[0-9]*">
     <button onclick="tambahSaldo()">Simpan</button>`;
   }
 
   if(type==="transaksi"){
     html=`
     <h3>Tambah Transaksi</h3>
-    <input id="nominal" type="number" placeholder="Nominal">
+    <input id="nominal" inputmode="numeric" pattern="[0-9]*" placeholder="Nominal">
     <input id="ket" placeholder="Keterangan">
 
     <div class="select select-tipe" onclick="toggleDropdown()">Pilih Tipe</div>
@@ -1267,45 +1261,72 @@ function getChartData(){
 
 function drawChart(canvasId){
 
-  fixCanvas(canvasId);
-
   const canvas = document.getElementById(canvasId);
   if(!canvas) return;
 
   const ctx = canvas.getContext("2d");
 
-  const {labels, masuk, keluar} = getChartData();
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
 
-  const width = canvas.width;
-  const height = canvas.height;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+
+  ctx.scale(dpr, dpr);
+
+  const width = rect.width;
+  const height = rect.height;
 
   ctx.clearRect(0,0,width,height);
 
+  const {labels, masuk, keluar} = getChartData();
+
   let max = Math.max(...masuk, ...keluar, 1000);
 
-  let stepX = width / (labels.length || 1);
+  const padding = 20;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
 
-  function drawLine(data, color){
+  const stepX = chartWidth / ((labels.length - 1) || 1);
+
+  function drawSmoothLine(data, color){
     ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
 
     data.forEach((val,i)=>{
-      let x = i * stepX;
-      let y = height - (val / max * height);
+      const x = padding + i * stepX;
+      const y = padding + chartHeight - (val / max * chartHeight);
 
-      if(i === 0) ctx.moveTo(x,y);
-      else ctx.lineTo(x,y);
+      if(i === 0){
+        ctx.moveTo(x,y);
+      }else{
+        const prevX = padding + (i-1)*stepX;
+        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
+
+        const cx = (prevX + x)/2;
+
+        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
+        ctx.quadraticCurveTo(x, y, x, y);
+      }
     });
 
     ctx.stroke();
+
+    // DOT
+    data.forEach((val,i)=>{
+      const x = padding + i * stepX;
+      const y = padding + chartHeight - (val / max * chartHeight);
+
+      ctx.beginPath();
+      ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
   }
 
-  // garis pemasukan
-  drawLine(masuk, "#16a34a");
-
-  // garis pengeluaran
-  drawLine(keluar, "#dc2626");
+  drawSmoothLine(masuk, "#16a34a");
+  drawSmoothLine(keluar, "#dc2626");
 }
 
 function renderDashboardHome(){
