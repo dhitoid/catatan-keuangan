@@ -299,6 +299,21 @@ button:active{
     transform:translateY(-20px);
   }
 }
+
+/* SWIPE DELETE HISTORY */
+.item.swiping{
+  transition:none;
+}
+
+.item.removing{
+  opacity:0;
+  transform:translateX(120%);
+}
+
+.item{
+  position:relative;
+  overflow:hidden;
+}
 </style>
 </head>
 
@@ -765,7 +780,7 @@ function openHistory(){
     html += `<p style="font-size:14px;color:#64748b;">Tidak ada data</p>`;
   }
 
-  filtered.forEach(n=>{
+  filtered.forEach((n, index)=>{
     let warna = "#0f5ea8";
     let simbol = "";
     let icon = "🔔";
@@ -781,7 +796,7 @@ function openHistory(){
     }
 
     html += `
-    <div class="item" style="align-items:flex-start;">
+      <div class="item" id="notif-${index}" style="align-items:flex-start;">
       
       <div style="display:flex;gap:10px;">
         <div style="font-size:20px;">${icon}</div>
@@ -822,6 +837,15 @@ function openHistory(){
   document.getElementById("modalContent").innerHTML = html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+  
+  setTimeout(()=>{
+  filtered.forEach((n, index)=>{
+    const el = document.getElementById(`notif-${index}`);
+    if(el){
+      enableSwipeDelete(el, n);
+    }
+  });
+},100);
 }
 
 function clearNotif(){
@@ -897,6 +921,49 @@ function shortRupiah(n){
   if(n >= 1000000) return "Rp " + (n/1000000).toFixed(1)+"jt";
   if(n >= 1000) return "Rp " + (n/1000).toFixed(0)+"rb";
   return rupiah(n);
+}
+
+function enableSwipeDelete(element, n){
+  let startX = 0;
+  let currentX = 0;
+  let isDragging = false;
+
+  element.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  });
+
+  element.addEventListener("touchmove", e=>{
+    if(!isDragging) return;
+
+    currentX = e.touches[0].clientX - startX;
+
+    element.classList.add("swiping");
+    element.style.transform = `translateX(${currentX}px)`;
+  });
+
+  element.addEventListener("touchend", ()=>{
+    isDragging = false;
+    element.classList.remove("swiping");
+
+    if(Math.abs(currentX) > 80){
+
+      const realIndex = notifHistory.findIndex(x => x.time === n.time);
+      if(realIndex !== -1){
+        notifHistory.splice(realIndex,1);
+        localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
+      }
+
+      element.classList.add("removing");
+
+      setTimeout(()=>{
+        openHistory();
+      },300);
+
+    }else{
+      element.style.transform = "";
+    }
+  });
 }
 
 document.addEventListener("click", function(e){
