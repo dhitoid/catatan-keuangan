@@ -628,6 +628,10 @@ svg {
     <div class="icon"><i data-feather="bell"></i></div>
     Notif
   </div>
+  <div class="menu-item" onclick="openBudget()">
+    <div class="icon"><i data-feather="sliders"></i></div>
+    Budget
+  </div>
   <div class="menu-item" onclick="openDashboard()">
     <div class="icon"><i data-feather="bar-chart-2"></i></div>
     AI Insight
@@ -659,6 +663,7 @@ svg {
 </div>
 
 <script>
+let budgets = JSON.parse(localStorage.getItem("budgets")) || {};
 let saldoManual = Number(localStorage.getItem("saldoManual")) || 0;
 let data;
 try{
@@ -701,6 +706,136 @@ function setYear(y, el){
 
 function updateBadge(){
   localStorage.setItem("unreadNotif", unreadNotif);
+}
+
+function setBudget(kategori, nominal){
+  if(!nominal || nominal <= 0) return;
+
+  budgets[kategori] = nominal;
+  localStorage.setItem("budgets", JSON.stringify(budgets));
+
+  showToast("Budget disimpan 💾","success");
+  renderDashboardHome();
+}
+
+function getMonthlyUsage(){
+  let now = new Date();
+  let month = now.getMonth();
+  let year = now.getFullYear();
+
+  let usage = {};
+
+  data.forEach(d=>{
+    let t = new Date(d.time);
+
+    if(
+      t.getMonth() === month &&
+      t.getFullYear() === year &&
+      d.tipe === "keluar"
+    ){
+      if(!usage[d.kategori]) usage[d.kategori] = 0;
+      usage[d.kategori] += d.nominal;
+    }
+  });
+
+  return usage;
+}
+
+function renderBudgetUI(){
+
+  let usage = getMonthlyUsage();
+
+  let html = `
+  <div style="
+    background:rgba(255,255,255,0.9);
+    backdrop-filter:blur(20px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    margin-bottom:16px;
+  ">
+
+    <div style="font-weight:600;margin-bottom:12px;">
+      📊 Anggaran Bulanan
+    </div>
+  `;
+
+  if(Object.keys(budgets).length === 0){
+    html += `<p style="font-size:12px;color:#64748b;">Belum ada budget</p>`;
+  }
+
+  for(let k in budgets){
+
+    let limit = budgets[k];
+    let used = usage[k] || 0;
+
+    let percent = Math.min((used / limit) * 100, 100);
+
+    let color = "#22c55e"; // aman
+    if(percent > 70) color = "#f59e0b";
+    if(percent >= 100) color = "#ef4444";
+
+    html += `
+    <div style="margin-bottom:14px;">
+
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+        <div style="font-weight:500;">${k}</div>
+        <div style="font-size:11px;color:#64748b;">
+          ${rupiah(used)} / ${rupiah(limit)}
+        </div>
+      </div>
+
+      <div style="
+        height:10px;
+        background:#e5e7eb;
+        border-radius:10px;
+        overflow:hidden;
+      ">
+        <div style="
+          width:${percent}%;
+          height:10px;
+          background:${color};
+          border-radius:10px;
+          transition:width 0.4s ease;
+        "></div>
+      </div>
+
+    </div>
+    `;
+  }
+
+  html += `</div>`;
+
+  return html;
+}
+
+function openBudget(){
+
+  let html = `
+  <div class="modal-header">Atur Budget</div>
+
+  <input id="budgetKategori" placeholder="Kategori (contoh: makan)">
+  <input id="budgetNominal" placeholder="Nominal">
+
+  <button onclick="saveBudget()">Simpan</button>
+  `;
+
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+}
+
+function saveBudget(){
+  let kategori = document.getElementById("budgetKategori").value.trim();
+  let nominal = getAngka(document.getElementById("budgetNominal"));
+
+  if(!kategori || !nominal){
+    showToast("Isi semua field","error");
+    return;
+  }
+
+  setBudget(kategori, nominal);
+  closeModal();
 }
 
 /* FORMAT */
@@ -1937,6 +2072,8 @@ function renderDashboardHome(){
   });
 
   let html = `
+  
+  ${renderBudgetUI()}
 
   <!-- 💳 MODERN BALANCE CARD -->
   <div style="
