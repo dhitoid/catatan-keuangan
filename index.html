@@ -474,6 +474,19 @@ svg {
   50%{transform:scale(1.3) rotate(-10deg);}
   100%{transform:scale(1);}
 }
+
+.balance-text{
+  transition: all 0.3s ease;
+}
+
+.balance-hidden{
+  filter: blur(8px);
+  opacity: 0.6;
+}
+
+.balance-mask{
+  letter-spacing: 2px;
+}
 </style>
 </head>
 
@@ -488,7 +501,7 @@ svg {
 
   <div class="card">
     <small>Saldo Aktif</small>
-    <div class="saldo" id="saldo">Rp 0</div>
+    <div class="saldo balance-text" id="saldo">Rp 0</div>
     <div class="eye" onclick="toggleSaldo()"><i id="eyeIcon" data-feather="eye"></i></div>
   </div>
 
@@ -551,7 +564,7 @@ let chartMode = "daily";
 let notifFilter = "all";
 let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = false;
-let hideBalance = false;
+let hideBalance = true;
 let selectedTipe="masuk";
 let selectedKategori="lainnya";
 let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
@@ -602,7 +615,13 @@ function animateSaldo(target){
     let percent = Math.min(progress/duration,1);
     let val = Math.floor(percent * target);
 
-    el.innerText = hideBalance ? "Rp ••••••" : rupiah(val);
+    if(hideBalance){
+      el.innerText = "Rp ••••••";
+      el.classList.add("balance-hidden","balance-mask");
+    }else{
+      el.innerText = rupiah(val);
+      el.classList.remove("balance-hidden","balance-mask");
+    }
 
     if(progress < duration) requestAnimationFrame(anim);
   }
@@ -638,10 +657,7 @@ function applyFilter(arr){
 
 /* RENDER */
 function render(){
-  const eye = document.getElementById("eyeIcon");
-  if(eye){
-    eye.setAttribute("data-feather", hideBalance ? "eye-off" : "eye");
-  }
+
   let saldo = saldoManual;
 
   data.forEach(d=>{
@@ -650,7 +666,15 @@ function render(){
 
   animateSaldo(saldo);
 
-  renderDashboardHome(); // ✅ TAMBAHAN
+  // 🔥 sync icon
+  const eye = document.getElementById("eyeIcon");
+  if(eye){
+    eye.setAttribute("data-feather", hideBalance ? "eye-off" : "eye");
+  }
+
+  renderDashboardHome();
+
+  setTimeout(renderIcons,50);
 }
 
 /* MUTASI */
@@ -1661,7 +1685,11 @@ function renderDashboardHome(){
   }
 
   // 🔥 FORMAT HIDE
-  const format = (val) => hideBalance ? "Rp ••••••" : rupiah(val);
+  const format = (val) => {
+  return hideBalance 
+    ? `<span class="balance-text balance-hidden balance-mask">Rp ••••••</span>`
+    : `<span class="balance-text">${rupiah(val)}</span>`;
+  };
 
   let recent = data.slice(-3).reverse();
 
@@ -1674,7 +1702,10 @@ function renderDashboardHome(){
         <div style="font-size:11px;color:#94a3b8;">${d.kategori}</div>
       </div>
       <div class="${d.tipe}" style="font-weight:600;">
-        ${d.tipe==="masuk"?"+":"-"}${hideBalance ? "••••••" : rupiah(d.nominal)}
+        ${d.tipe==="masuk"?"+":"-"}
+          <span class="balance-text ${hideBalance ? 'balance-hidden balance-mask' : ''}">
+            ${hideBalance ? "••••••" : rupiah(d.nominal)}
+          </span>
       </div>
     </div>`;
   });
