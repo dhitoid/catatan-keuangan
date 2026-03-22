@@ -585,6 +585,7 @@ function tambahSaldo(){
 
   closeModal();
   render();
+  generateInsight();
 }
 
 function tambah(){
@@ -632,6 +633,7 @@ function tambah(){
   
   closeModal();
   render();
+  generateInsight();
 
   // RESET STATE (INI PENTING)
   selectedTipe = "masuk";
@@ -763,6 +765,64 @@ function clearNotif(){
   notifHistory = [];
   localStorage.removeItem("notifHistory");
   openHistory();
+}
+
+let lastInsightTime = 0;
+
+function canShowInsight(){
+  let now = Date.now();
+  if(now - lastInsightTime > 10000){
+    lastInsightTime = now;
+    return true;
+  }
+  return false;
+}
+
+function generateInsight(){
+  if(data.length < 3) return;
+  if(!canShowInsight()) return;
+  let totalMasuk = 0;
+  let totalKeluar = 0;
+
+  let kategoriCount = {};
+
+  data.forEach(d=>{
+    if(d.tipe === "masuk"){
+      totalMasuk += d.nominal;
+    }else{
+      totalKeluar += d.nominal;
+    }
+
+    // hitung kategori
+    if(!kategoriCount[d.kategori]){
+      kategoriCount[d.kategori] = 0;
+    }
+    kategoriCount[d.kategori]++;
+  });
+
+  // 🔍 insight 1: pengeluaran > pemasukan
+  if(totalKeluar > totalMasuk){
+    showToast("⚠️ Pengeluaran lebih besar dari pemasukan","error");
+  }
+
+  // 🔍 insight 2: kategori paling sering
+  let topKategori = Object.keys(kategoriCount).reduce((a,b)=>
+    kategoriCount[a] > kategoriCount[b] ? a : b
+  );
+
+  if(kategoriCount[topKategori] >= 3){
+    showToast(`📊 Kamu sering transaksi di kategori ${topKategori}`,"info");
+  }
+
+  // 🔍 insight 3: saldo rendah
+  let saldo = saldoManual;
+  data.forEach(d=>{
+    saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
+  });
+
+  if(saldo < 50000){
+    showToast("💸 Saldo kamu mulai menipis","error");
+  }
 }
 
 document.addEventListener("click", function(e){
