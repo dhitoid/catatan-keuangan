@@ -441,7 +441,7 @@ try{
 }catch{
   data = [];
 }
-let chartMode = "weekly";
+let chartMode = "daily";
 let notifFilter = "all";
 let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = false;
@@ -1247,13 +1247,19 @@ function getChartData(){
 
   data.forEach(d=>{
     let date = new Date(d.time);
-
     let key;
 
-    if(chartMode === "weekly"){
+    if(chartMode === "daily"){
+      key = date.toISOString().slice(0,10); // YYYY-MM-DD
+    }
+    else if(chartMode === "weekly"){
       key = date.toISOString().slice(5,10); // MM-DD
-    }else{
+    }
+    else if(chartMode === "monthly"){
       key = date.toISOString().slice(0,7); // YYYY-MM
+    }
+    else if(chartMode === "yearly"){
+      key = date.getFullYear().toString();
     }
 
     if(!map[key]){
@@ -1267,7 +1273,7 @@ function getChartData(){
     }
   });
 
-  let labels = Object.keys(map).slice(-7);
+  let labels = Object.keys(map).slice(-10);
 
   if(labels.length < 2){
     labels = ["-", "-"];
@@ -1312,141 +1318,133 @@ function drawChart(canvasId){
   const {labels, masuk, keluar} = getChartData();
   let max = Math.max(...masuk, ...keluar, 1000);
 
-  const padding = 20;
+  const padding = 30;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
   const stepX = chartWidth / ((labels.length - 1) || 1);
 
   function getPoints(data){
-    return data.map((val,i)=>{
-      return {
-        x: padding + i * stepX,
-        y: padding + chartHeight - (val / max * chartHeight),
-        value: val
-      };
+    return data.map((val,i)=>({
+      x: padding + i * stepX,
+      y: padding + chartHeight - (val / max * chartHeight),
+      value: val
+    }));
+  }
+
+  const pMasuk = getPoints(masuk);
+  const pKeluar = getPoints(keluar);
+
+  function curve(points){
+    ctx.beginPath();
+    points.forEach((p,i)=>{
+      if(i === 0) ctx.moveTo(p.x,p.y);
+      else{
+        const prev = points[i-1];
+        const cx = (prev.x + p.x)/2;
+        ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y+p.y)/2);
+        ctx.quadraticCurveTo(p.x,p.y,p.x,p.y);
+      }
     });
   }
 
-  const masukPoints = getPoints(masuk);
-  const keluarPoints = getPoints(keluar);
+  function area(points,color){
+    const g = ctx.createLinearGradient(0,0,0,height);
+    g.addColorStop(0,color);
+    g.addColorStop(1,"rgba(255,255,255,0)");
 
-  function drawSmoothLine(points, color){
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
+    curve(points);
 
-    points.forEach((p,i)=>{
-      if(i === 0){
-        ctx.moveTo(p.x, p.y);
-      }else{
-        const prev = points[i-1];
-        const cx = (prev.x + p.x)/2;
-
-        ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + p.y)/2);
-        ctx.quadraticCurveTo(p.x, p.y, p.x, p.y);
-      }
-    });
-
-    ctx.stroke();
-  }
-
-  function drawGradient(points, color){
-    const gradient = ctx.createLinearGradient(0,0,0,height);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(1, "rgba(255,255,255,0)");
-
-    ctx.beginPath();
-
-    points.forEach((p,i)=>{
-      if(i === 0){
-        ctx.moveTo(p.x, p.y);
-      }else{
-        const prev = points[i-1];
-        const cx = (prev.x + p.x)/2;
-
-        ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + p.y)/2);
-        ctx.quadraticCurveTo(p.x, p.y, p.x, p.y);
-      }
-    });
-
-    ctx.lineTo(points[points.length-1].x, height - padding);
-    ctx.lineTo(points[0].x, height - padding);
+    ctx.lineTo(points.at(-1).x, height-padding);
+    ctx.lineTo(points[0].x, height-padding);
     ctx.closePath();
 
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = g;
     ctx.fill();
   }
 
-  function drawDots(points, color){
+  function line(points,color){
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    curve(points);
+    ctx.stroke();
+  }
+
+  function drawCrosshair(index){
+    if(index < 0) return;
+
+    const x = pMasuk[index].x;
+
+    ctx.beginPath();
+    ctx.setLineDash([4,4]);
+    ctx.moveTo(x, padding);
+    ctx.lineTo(x, height-padding);
+    ctx.strokeStyle = "rgba(0,0,0,0.2)";
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawDots(points,color){
     points.forEach((p,i)=>{
       ctx.beginPath();
-      ctx.arc(p.x, p.y, activeIndex === i ? 5 : 3, 0, Math.PI*2);
-      ctx.fillStyle = "#fff";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, activeIndex === i ? 3 : 2, 0, Math.PI*2);
+      ctx.arc(p.x, p.y, activeIndex===i?6:0, 0, Math.PI*2);
       ctx.fillStyle = color;
       ctx.fill();
     });
   }
 
-  function drawTooltip(index){
+  function tooltip(index){
     if(index < 0) return;
 
-    const p = masukPoints[index];
+    const x = pMasuk[index].x;
+    const y = pMasuk[index].y;
 
-    const text = `${labels[index]} • ${shortRupiah(masuk[index])}`;
+    const text1 = `${shortRupiah(masuk[index])}`;
+    const text2 = `-${shortRupiah(keluar[index])}`;
 
     ctx.font = "12px sans-serif";
-    const paddingBox = 8;
-    const textWidth = ctx.measureText(text).width;
 
-    const x = p.x - textWidth/2 - paddingBox;
-    const y = p.y - 35;
+    const w = Math.max(ctx.measureText(text1).width, ctx.measureText(text2).width) + 20;
 
-    // box
+    const tx = x - w/2;
+    const ty = y - 50;
+
+    // glass box
     ctx.fillStyle = "rgba(0,0,0,0.75)";
     ctx.beginPath();
-    ctx.roundRect(x, y, textWidth + paddingBox*2, 24, 8);
+    ctx.roundRect(tx, ty, w, 40, 12);
     ctx.fill();
 
-    // text
-    ctx.fillStyle = "#fff";
-    ctx.fillText(text, x + paddingBox, y + 16);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillText(text1, tx+10, ty+16);
+
+    ctx.fillStyle = "#ef4444";
+    ctx.fillText(text2, tx+10, ty+30);
   }
 
   function render(){
     ctx.clearRect(0,0,width,height);
 
-    // area
-    drawGradient(masukPoints, "rgba(34,197,94,0.35)");
-    drawGradient(keluarPoints, "rgba(239,68,68,0.25)");
+    area(pMasuk,"rgba(34,197,94,0.35)");
+    area(pKeluar,"rgba(239,68,68,0.25)");
 
-    // line
-    drawSmoothLine(masukPoints, "#22c55e");
-    drawSmoothLine(keluarPoints, "#ef4444");
+    line(pMasuk,"#22c55e");
+    line(pKeluar,"#ef4444");
 
-    // dots
-    drawDots(masukPoints, "#22c55e");
-
-    // tooltip
-    drawTooltip(activeIndex);
+    drawCrosshair(activeIndex);
+    drawDots(pMasuk,"#22c55e");
+    tooltip(activeIndex);
   }
 
   render();
 
-  // 👉 TOUCH INTERACTION (BCA STYLE)
+  // DRAG INTERACTION (SUPER SMOOTH)
   canvas.addEventListener("touchmove", e=>{
-    const touch = e.touches[0];
     const rect = canvas.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
 
-    const x = touch.clientX - rect.left;
-
-    let index = Math.round((x - padding) / stepX);
-
-    if(index >= 0 && index < labels.length){
-      activeIndex = index;
+    let i = Math.round((x - padding)/stepX);
+    if(i >= 0 && i < labels.length){
+      activeIndex = i;
     }
 
     render();
@@ -1492,13 +1490,11 @@ function renderDashboardHome(){
     <small>AI Insight</small>
 
     <!-- SWITCH -->
-    <div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="setChartMode('weekly')" style="flex:1;opacity:${chartMode==='weekly'?1:0.5}">
-        Mingguan
-      </button>
-      <button onclick="setChartMode('monthly')" style="flex:1;opacity:${chartMode==='monthly'?1:0.5}">
-        Bulanan
-      </button>
+    <div style="display:flex;gap:6px;margin:10px 0;">
+      <button onclick="setChartMode('daily')" style="flex:1;opacity:${chartMode==='daily'?1:0.5}">Harian</button>
+      <button onclick="setChartMode('weekly')" style="flex:1;opacity:${chartMode==='weekly'?1:0.5}">Mingguan</button>
+      <button onclick="setChartMode('monthly')" style="flex:1;opacity:${chartMode==='monthly'?1:0.5}">Bulanan</button>
+      <button onclick="setChartMode('yearly')" style="flex:1;opacity:${chartMode==='yearly'?1:0.5}">Tahunan</button>
     </div>
 
     <canvas id="miniChart" style="height:160px;width:100%;"></canvas>
