@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <script src="https://unpkg.com/feather-icons"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
 <title>MyFinance DT Pro</title>
 
 <style>
@@ -799,6 +802,12 @@ svg {
   opacity: 0;
   transition: 0.3s;
 }
+
+.profile-icon img{
+  width:35px;
+  height:35px;
+  border-radius:50%;
+}
 </style>
 </head>
 
@@ -810,6 +819,25 @@ svg {
     <i data-feather="bell"></i>
     <span id="notifBadge"></span>
   </div>
+  
+  <div class="profile-icon" onclick="openProfileModal()">
+    <img id="userPhoto" src="">
+  </div>
+  
+  <button id="loginBtn" onclick="loginGoogle()">Login dengan Google</button>
+  
+  <div id="profileModal" style="display:none;">
+  <h3>Profil</h3>
+
+  <img id="profilePhoto" width="60">
+  <p id="userName"></p>
+
+  <input type="text" id="editName" placeholder="Ubah nama">
+
+  <button onclick="saveName()">Simpan</button>
+  <button onclick="logout()">Logout</button>
+  <button onclick="loginGoogle()">Ganti Akun</button>
+</div>
 
   <div class="header">
     <h2 id="greeting"></h2>
@@ -897,6 +925,61 @@ let selectedYear = null;
 let selectedBudgetKategori = null;
 let calcInput = "";
 let calcHistory = [];
+let currentUser = null;
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    currentUser = user;
+
+    document.getElementById("loginBtn").style.display = "none";
+
+    loadDataCloud(user.uid);
+    updateUserUI(user);
+
+  } else {
+    document.getElementById("loginBtn").style.display = "block";
+  }
+});
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCHPhlOsa6Qkk_AWSGA88jfgj0K0XCt6e4",
+  authDomain: "http://myfinancedt.firebaseapp.com",
+  databaseURL: "https://myfinancedt-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "myfinancedt",
+  storageBucket: "myfinancedt.firebasestorage.app",
+  messagingSenderId: "169628787713",
+  appId: "1:169628787713:web:60ed8a89dc57208f270c00"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.database();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+function loginGoogle(){
+  auth.signInWithPopup(provider);
+}
+
+function updateUserUI(user){
+  document.getElementById("userPhoto").src = user.photoURL;
+  document.getElementById("profilePhoto").src = user.photoURL;
+  document.getElementById("userName").innerText = user.displayName;
+}
+
+function openProfileModal(){
+  document.getElementById("profileModal").style.display = "block";
+}
+
+function saveName(){
+  const newName = document.getElementById("editName").value;
+
+  db.ref("users/" + currentUser.uid + "/customName").set(newName);
+}
+
+function logout(){
+  auth.signOut();
+}
 
 function openCalculator(){
 
@@ -1653,7 +1736,16 @@ function tambahSaldo(){
     time: new Date().toISOString()
   });
 
-  localStorage.setItem("data", JSON.stringify(data));
+function saveDataCloud(){
+  if(!currentUser) return;
+
+  db.ref("users/" + currentUser.uid).set({
+    data,
+    notifHistory,
+    budgets,
+    saldoManual
+  });
+}
 
   // ❌ HAPUS INI (biar tidak double)
   // saldoManual += n;
@@ -1663,6 +1755,20 @@ function tambahSaldo(){
   closeModal();
   render();
   generateInsight();
+}
+
+function loadDataCloud(uid){
+  db.ref("users/" + uid).on("value", snap=>{
+    const val = snap.val();
+    if(!val) return;
+
+    data = val.data || [];
+    notifHistory = val.notifHistory || [];
+    budgets = val.budgets || {};
+    saldoManual = val.saldoManual || 0;
+
+    render(); // fungsi UI kamu
+  });
 }
 
 function tambah(){
