@@ -364,6 +364,13 @@ button:active{
 input, select, textarea {
   font-size:16px !important;
 }
+
+/* canvas fix */
+canvas{
+  display:block;
+  width:100% !important;
+  height:auto !important;
+}
 </style>
 </head>
 
@@ -434,6 +441,7 @@ try{
 }catch{
   data = [];
 }
+let chartMode = "weekly";
 let notifFilter = "all";
 let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = false;
@@ -1235,25 +1243,32 @@ function fixCanvas(canvasId){
 
 function getChartData(){
 
-  let perHari = {};
+  let map = {};
 
   data.forEach(d=>{
-    let tgl = new Date(d.time).toISOString().slice(0,10);
+    let date = new Date(d.time);
 
-    if(!perHari[tgl]){
-      perHari[tgl] = {masuk:0, keluar:0};
+    let key;
+
+    if(chartMode === "weekly"){
+      key = date.toISOString().slice(5,10); // MM-DD
+    }else{
+      key = date.toISOString().slice(0,7); // YYYY-MM
+    }
+
+    if(!map[key]){
+      map[key] = {masuk:0, keluar:0};
     }
 
     if(d.tipe === "masuk"){
-      perHari[tgl].masuk += d.nominal;
+      map[key].masuk += d.nominal;
     }else{
-      perHari[tgl].keluar += d.nominal;
+      map[key].keluar += d.nominal;
     }
   });
 
-  let labels = Object.keys(perHari).slice(-7);
+  let labels = Object.keys(map).slice(-7);
 
-  // 🔥 FIX: kalau data kurang dari 2 → tambahin dummy
   if(labels.length < 2){
     labels = ["-", "-"];
   }
@@ -1261,12 +1276,17 @@ function getChartData(){
   let masuk = [];
   let keluar = [];
 
-  labels.forEach(t=>{
-    masuk.push(perHari[t]?.masuk || 0);
-    keluar.push(perHari[t]?.keluar || 0);
+  labels.forEach(k=>{
+    masuk.push(map[k]?.masuk || 0);
+    keluar.push(map[k]?.keluar || 0);
   });
 
   return {labels, masuk, keluar};
+}
+
+function setChartMode(mode){
+  chartMode = mode;
+  renderDashboardHome();
 }
 
 function drawChart(canvasId){
@@ -1279,11 +1299,9 @@ function drawChart(canvasId){
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  // ✅ FIX DPI
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
 
-  ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);
 
   const width = rect.width;
@@ -1295,28 +1313,19 @@ function drawChart(canvasId){
 
   let max = Math.max(...masuk, ...keluar, 1000);
 
-  const padding = 30;
+  const padding = 20;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
 
   const stepX = chartWidth / ((labels.length - 1) || 1);
 
-  // 🔥 GRID (BANK STYLE)
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
-  ctx.lineWidth = 1;
+  function drawArea(data, colorTop, colorBottom){
 
-  for(let i=0;i<4;i++){
-    let y = padding + (chartHeight/3)*i;
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-  }
+    const gradient = ctx.createLinearGradient(0,0,0,height);
+    gradient.addColorStop(0, colorTop);
+    gradient.addColorStop(1, colorBottom);
 
-  function drawLine(data, color){
     ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
 
     data.forEach((val,i)=>{
       const x = padding + i * stepX;
@@ -1325,32 +1334,57 @@ function drawChart(canvasId){
       if(i === 0){
         ctx.moveTo(x,y);
       }else{
-        ctx.lineTo(x,y);
+        const prevX = padding + (i-1)*stepX;
+        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
+
+        const cx = (prevX + x)/2;
+
+        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
+        ctx.quadraticCurveTo(x, y, x, y);
       }
     });
 
-    ctx.stroke();
+    // CLOSE AREA
+    ctx.lineTo(padding + (data.length-1)*stepX, height - padding);
+    ctx.lineTo(padding, height - padding);
+    ctx.closePath();
 
-    // 🔥 GLOW EFFECT
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 10;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    ctx.fillStyle = gradient;
+    ctx.fill();
+  }
 
-    // DOT
+  function drawLine(data, color){
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+
     data.forEach((val,i)=>{
       const x = padding + i * stepX;
       const y = padding + chartHeight - (val / max * chartHeight);
 
-      ctx.beginPath();
-      ctx.arc(x,y,4,0,Math.PI*2);
-      ctx.fillStyle = color;
-      ctx.fill();
+      if(i === 0){
+        ctx.moveTo(x,y);
+      }else{
+        const prevX = padding + (i-1)*stepX;
+        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
+
+        const cx = (prevX + x)/2;
+
+        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
+        ctx.quadraticCurveTo(x, y, x, y);
+      }
     });
+
+    ctx.stroke();
   }
 
-  drawLine(masuk, "#22c55e"); // hijau
-  drawLine(keluar, "#ef4444"); // merah
+  // AREA (BANK STYLE)
+  drawArea(masuk, "rgba(34,197,94,0.4)", "rgba(34,197,94,0)");
+  drawArea(keluar, "rgba(239,68,68,0.4)", "rgba(239,68,68,0)");
+
+  // LINE
+  drawLine(masuk, "#22c55e");
+  drawLine(keluar, "#ef4444");
 }
 
 function renderDashboardHome(){
@@ -1382,23 +1416,33 @@ function renderDashboardHome(){
     }
   }
 
-let html = `
-<div class="card" style="margin:0;">
-  <small>AI Insight</small>
+  let html = `
+  <div class="card" style="margin:0;">
+    <small>AI Insight</small>
 
-  <canvas id="miniChart" style="height:160px;width:100%;display:block;"></canvas>
+    <!-- SWITCH -->
+    <div style="display:flex;gap:8px;margin:10px 0;">
+      <button onclick="setChartMode('weekly')" style="flex:1;opacity:${chartMode==='weekly'?1:0.5}">
+        Mingguan
+      </button>
+      <button onclick="setChartMode('monthly')" style="flex:1;opacity:${chartMode==='monthly'?1:0.5}">
+        Bulanan
+      </button>
+    </div>
 
-  <div style="margin-top:10px;font-size:14px;line-height:1.5;">
-    ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
+    <canvas id="miniChart" style="height:160px;width:100%;"></canvas>
+
+    <div style="margin-top:10px;font-size:14px;line-height:1.5;">
+      ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
+    </div>
   </div>
-</div>
-`;
+  `;
 
   document.getElementById("dashboardHome").innerHTML = html;
-  
+
   setTimeout(()=>{
-  drawChart("miniChart");
-},100);
+    drawChart("miniChart");
+  },100);
 }
 
 function generateInsightText(masuk, keluar, kategori, saldo){
