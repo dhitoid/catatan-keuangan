@@ -373,6 +373,7 @@ try{
 }catch{
   data = [];
 }
+let notifFilter = "all";
 let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = true;
 let selectedTipe="masuk";
@@ -581,7 +582,7 @@ function tambahSaldo(){
   saldoManual += n;
   localStorage.setItem("saldoManual", saldoManual);
 
-  showToast("Saldo berhasil ditambahkan 💰","success", n, "masuk");
+  showToast("Saldo berhasil ditambahkan 💰","success", n, "masuk", "Top Up Saldo");
 
   closeModal();
   render();
@@ -625,11 +626,11 @@ function tambah(){
   localStorage.setItem("data", JSON.stringify(data));
 
   // NOTIF BERBEDA
-if(selectedTipe === "masuk"){
-  showToast("Pemasukan berhasil ditambahkan 💸","success", nominal, "masuk");
-}else{
-  showToast("Pengeluaran tercatat ⚠️","error", nominal, "keluar");
-}
+  if(selectedTipe === "masuk"){
+    showToast("Pemasukan berhasil ditambahkan 💸","success", nominal, "masuk", ket);
+  }else{
+    showToast("Pengeluaran tercatat ⚠️","error", nominal, "keluar", ket);
+  }
   
   closeModal();
   render();
@@ -667,15 +668,15 @@ function vibrate(){
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
-function showToast(message, type="info", nominal=0, tipeTransaksi=null){
+function showToast(message, type="info", nominal=0, tipeTransaksi=null, ket=""){
   const container = document.getElementById("toast-container");
 
-  // SAVE HISTORY (UPGRADE)
   notifHistory.unshift({
     message,
     type,
     nominal,
     tipeTransaksi,
+    ket,
     time:new Date().toISOString()
   });
 
@@ -737,43 +738,79 @@ function removeToast(toast){
 }
 
 function openHistory(){
-  let html = `<h3>Riwayat Notifikasi</h3>`;
+  unreadNotif = 0;
+  updateBadge();
 
-  if(notifHistory.length === 0){
-    html += `<p style="font-size:14px;color:#64748b;">Belum ada notifikasi</p>`;
-  }
+  let html = `
+    <h3>Riwayat Notifikasi</h3>
 
-  notifHistory.forEach(n=>{
-  let warna = "#0f5ea8";
-  let simbol = "";
-
-  if(n.tipeTransaksi === "masuk"){
-    warna = "#16a34a";
-    simbol = "+";
-  }else if(n.tipeTransaksi === "keluar"){
-    warna = "#dc2626";
-    simbol = "-";
-  }
-
-  html += `
-  <div class="item">
-    <div>
-      <div style="font-size:14px;">${n.message}</div>
-      <div style="font-size:11px;color:#64748b;">
-        ${formatTanggal(n.time)} • ${formatJam(n.time)}
-      </div>
+    <div style="display:flex;gap:8px;margin:10px 0;">
+      <button onclick="setNotifFilter('all')">Semua</button>
+      <button onclick="setNotifFilter('masuk')">Masuk</button>
+      <button onclick="setNotifFilter('keluar')">Keluar</button>
     </div>
-
-    ${
-      n.nominal
-      ? `<div style="color:${warna};font-weight:600;">
-          ${simbol}${rupiah(n.nominal)}
-        </div>`
-      : ""
-    }
-  </div>
   `;
-});
+
+  let filtered = notifHistory.filter(n=>{
+    if(notifFilter === "all") return true;
+    return n.tipeTransaksi === notifFilter;
+  });
+
+  if(filtered.length === 0){
+    html += `<p style="font-size:14px;color:#64748b;">Tidak ada data</p>`;
+  }
+
+  filtered.forEach(n=>{
+    let warna = "#0f5ea8";
+    let simbol = "";
+    let icon = "🔔";
+
+    if(n.tipeTransaksi === "masuk"){
+      warna = "#16a34a";
+      simbol = "+";
+      icon = "💸";
+    }else if(n.tipeTransaksi === "keluar"){
+      warna = "#dc2626";
+      simbol = "-";
+      icon = "💳";
+    }
+
+    html += `
+    <div class="item" style="align-items:flex-start;">
+      
+      <div style="display:flex;gap:10px;">
+        <div style="font-size:20px;">${icon}</div>
+
+        <div>
+          <div style="font-size:14px;font-weight:500;">
+            ${n.message}
+          </div>
+
+          ${
+            n.ket
+            ? `<div style="font-size:12px;color:#64748b;">
+                ${n.ket}
+              </div>`
+            : ""
+          }
+
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+            ${formatTanggal(n.time)} • ${formatJam(n.time)}
+          </div>
+        </div>
+      </div>
+
+      ${
+        n.nominal
+        ? `<div style="color:${warna};font-weight:600;">
+            ${simbol}${rupiah(n.nominal)}
+          </div>`
+        : ""
+      }
+
+    </div>
+    `;
+  });
 
   html += `<button onclick="clearNotif()">Hapus Semua</button>`;
 
@@ -785,6 +822,11 @@ function openHistory(){
 function clearNotif(){
   notifHistory = [];
   localStorage.removeItem("notifHistory");
+  openHistory();
+}
+
+function setNotifFilter(type){
+  notifFilter = type;
   openHistory();
 }
 
