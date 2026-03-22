@@ -1181,6 +1181,7 @@ function openDashboard(){
     <div class="card" style="margin:0 0 15px 0;">
       <small>Saldo Sekarang</small>
       <div class="saldo">${rupiah(saldo)}</div>
+      <canvas id="mainChart" height="180" style="margin:15px 0;"></canvas>
     </div>
 
     <div class="item">
@@ -1215,6 +1216,96 @@ function openDashboard(){
   document.getElementById("modalContent").innerHTML = html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+  
+  setTimeout(()=>{
+  drawChart("mainChart");
+},100);
+}
+
+function fixCanvas(canvasId){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+
+  canvas.getContext("2d").scale(dpr, dpr);
+}
+
+function getChartData(){
+
+  let perHari = {};
+
+  data.forEach(d=>{
+    let tgl = new Date(d.time).toISOString().slice(0,10);
+
+    if(!perHari[tgl]){
+      perHari[tgl] = {masuk:0, keluar:0};
+    }
+
+    if(d.tipe === "masuk"){
+      perHari[tgl].masuk += d.nominal;
+    }else{
+      perHari[tgl].keluar += d.nominal;
+    }
+  });
+
+  let labels = Object.keys(perHari).slice(-7); // last 7 hari
+  let masuk = [];
+  let keluar = [];
+
+  labels.forEach(t=>{
+    masuk.push(perHari[t]?.masuk || 0);
+    keluar.push(perHari[t]?.keluar || 0);
+  });
+
+  return {labels, masuk, keluar};
+}
+
+function drawChart(canvasId){
+
+  fixCanvas(canvasId);
+
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  const {labels, masuk, keluar} = getChartData();
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0,0,width,height);
+
+  let max = Math.max(...masuk, ...keluar, 1000);
+
+  let stepX = width / (labels.length || 1);
+
+  function drawLine(data, color){
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    data.forEach((val,i)=>{
+      let x = i * stepX;
+      let y = height - (val / max * height);
+
+      if(i === 0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    });
+
+    ctx.stroke();
+  }
+
+  // garis pemasukan
+  drawLine(masuk, "#16a34a");
+
+  // garis pengeluaran
+  drawLine(keluar, "#dc2626");
 }
 
 function renderDashboardHome(){
@@ -1246,16 +1337,23 @@ function renderDashboardHome(){
     }
   }
 
-  let html = `
-  <div class="card" style="margin:0;">
-    <small>AI Insight</small>
-    <div style="margin-top:10px;font-size:14px;line-height:1.5;">
-      ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
-    </div>
+let html = `
+<div class="card" style="margin:0;">
+  <small>AI Insight</small>
+
+  <canvas id="miniChart" height="120" style="margin-top:10px;"></canvas>
+
+  <div style="margin-top:10px;font-size:14px;line-height:1.5;">
+    ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
   </div>
-  `;
+</div>
+`;
 
   document.getElementById("dashboardHome").innerHTML = html;
+  
+  setTimeout(()=>{
+  drawChart("miniChart");
+},100);
 }
 
 function generateInsightText(masuk, keluar, kategori, saldo){
