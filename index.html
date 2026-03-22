@@ -240,29 +240,129 @@ button:active{
   transform:scale(0.96);
 }
 
-/* 🔥 MODAL FIX */
+/* ============================= */
+/* MODAL V2 (UPGRADE) */
+/* ============================= */
+
 .modal{
   position:fixed;
   bottom:-100%;
   width:100%;
-  max-height:85vh;
+  max-height:90vh;
   overflow-y:auto;
-  background:white;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(25px);
   padding:20px;
-  border-radius:25px 25px 0 0;
-  transition:0.3s;
-  box-shadow:0 -10px 30px rgba(0,0,0,0.25);
-  z-index:999; /* 🔥 penting */
+  border-radius:28px 28px 0 0;
+  transition:0.35s cubic-bezier(.22,.61,.36,1);
+  box-shadow:0 -20px 60px rgba(0,0,0,0.25);
+  z-index:999;
 }
 
-.modal.active{bottom:0;}
+.modal.active{
+  bottom:0;
+}
 
+/* handle atas */
+.modal::before{
+  content:"";
+  display:block;
+  width:50px;
+  height:5px;
+  background:#cbd5e1;
+  border-radius:10px;
+  margin:0 auto 12px;
+}
+
+/* header */
+.modal-header{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:12px;
+}
+
+/* input modern */
 .modal input{
   width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:14px;
+  border:none;
+  background:#f1f5f9;
+  font-size:14px;
+}
+
+.modal input:focus{
+  background:#e2e8f0;
+}
+
+/* kategori grid */
+.kategori-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.kategori-item{
   padding:12px;
-  margin-bottom:10px;
-  border-radius:10px;
-  border:1px solid #eee;
+  border-radius:14px;
+  background:#f1f5f9;
+  text-align:center;
+  font-size:12px;
+  cursor:pointer;
+}
+
+.kategori-item.active{
+  background:#1d9bf0;
+  color:white;
+}
+
+/* FILTER MODERN */
+.filter-modern{
+  margin-top:10px;
+}
+
+/* bulan scroll */
+.month-scroll{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+
+.month-item{
+  min-width:70px;
+  padding:8px;
+  text-align:center;
+  border-radius:12px;
+  background:#f1f5f9;
+  font-size:12px;
+}
+
+.month-item.active{
+  background:#1d9bf0;
+  color:white;
+}
+
+/* tahun */
+.year-list{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.year-item{
+  flex:1;
+  padding:10px;
+  border-radius:12px;
+  background:#f1f5f9;
+  text-align:center;
+}
+
+.year-item.active{
+  background:#0f5ea8;
+  color:white;
 }
 
 /* SELECT */
@@ -568,6 +668,30 @@ let hideBalance = true;
 let selectedTipe="masuk";
 let selectedKategori="lainnya";
 let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
+let selectedMonth = null;
+let selectedYear = null;
+
+function setMonth(m, el){
+  selectedMonth = m;
+
+  document.querySelectorAll(".month-item").forEach(i=>{
+    i.classList.remove("active");
+  });
+
+  el.classList.add("active");
+  renderMutasiModal();
+}
+
+function setYear(y, el){
+  selectedYear = y;
+
+  document.querySelectorAll(".year-item").forEach(i=>{
+    i.classList.remove("active");
+  });
+
+  el.classList.add("active");
+  renderMutasiModal();
+}
 
 function updateBadge(){
   localStorage.setItem("unreadNotif", unreadNotif);
@@ -633,6 +757,16 @@ function applyFilter(arr){
   let search = document.getElementById("search")?.value.toLowerCase() || "";
   let bulan = document.getElementById("filterBulan")?.value;
   let tanggal = document.getElementById("filterTanggal")?.value;
+  
+  if(selectedMonth){
+  let dBulan = new Date(d.time).getMonth()+1;
+  if(dBulan !== selectedMonth) return false;
+  }
+  
+  if(selectedYear){
+    let dYear = new Date(d.time).getFullYear();
+    if(dYear !== selectedYear) return false;
+  }
 
   return arr.filter(d=>{
     let text = (d.ket + " " + (d.kategori||"")).toLowerCase();
@@ -734,43 +868,83 @@ function openModal(type){
   }
 
   if(type==="transaksi"){
-    html=`
-    <h3>Tambah Transaksi</h3>
-    <input id="nominal" type="text" inputmode="numeric" placeholder="Nominal">
-    <input id="ket" placeholder="Keterangan">
+  html=`
+  <div class="modal-header">Tambah Transaksi</div>
 
-    <div class="select select-tipe" onclick="toggleDropdown()">Pilih Tipe</div>
-    <div class="options" id="dropdown">
-      <div onclick="setTipe('masuk')">Pemasukan</div>
-      <div onclick="setTipe('keluar')">Pengeluaran</div>
+  <input id="nominal" placeholder="Nominal">
+  <input id="ket" placeholder="Keterangan">
+
+  <div class="select select-tipe" onclick="toggleDropdown()">Pilih Tipe</div>
+  <div class="options" id="dropdown">
+    <div onclick="setTipe('masuk')">Pemasukan</div>
+    <div onclick="setTipe('keluar')">Pengeluaran</div>
+  </div>
+
+  <div style="margin-top:10px;font-size:13px;font-weight:600;">Kategori</div>
+
+  <div class="kategori-grid">
+    <div class="kategori-item" onclick="pickKategori(this,'makan')">
+      <i data-feather="coffee"></i>
+      <div>Makan</div>
     </div>
 
-    <div class="select select-kategori" onclick="toggleKategori()">Pilih Kategori</div>
-    <div class="options" id="dropdownKat">
-      <div onclick="setKategori('makan')">
-        <i data-feather="coffee"></i> Makan
-      </div>
-      
-      <div onclick="setKategori('transport')">
-        <i data-feather="truck"></i> Transport
-      </div>
-      
-      <div onclick="setKategori('belanja')">
-        <i data-feather="shopping-bag"></i> Belanja
-      </div>
-      
-      <div onclick="setKategori('lainnya')">
-        <i data-feather="briefcase"></i> Lainnya
-      </div>
+    <div class="kategori-item" onclick="pickKategori(this,'transport')">
+      <i data-feather="truck"></i>
+      <div>Transport</div>
     </div>
 
-    <button onclick="tambah()">Simpan</button>`;
-  }
+    <div class="kategori-item" onclick="pickKategori(this,'belanja')">
+      <i data-feather="shopping-bag"></i>
+      <div>Belanja</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'tagihan')">
+      <i data-feather="file-text"></i>
+      <div>Tagihan</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'hiburan')">
+      <i data-feather="headphones"></i>
+      <div>Hiburan</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'gaji')">
+      <i data-feather="dollar-sign"></i>
+      <div>Gaji</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'investasi')">
+      <i data-feather="trending-up"></i>
+      <div>Investasi</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'kesehatan')">
+      <i data-feather="heart"></i>
+      <div>Kesehatan</div>
+    </div>
+
+    <div class="kategori-item" onclick="pickKategori(this,'pendidikan')">
+      <i data-feather="book-open"></i>
+      <div>Pendidikan</div>
+    </div>
+  </div>
+
+  <button onclick="tambah()">Simpan</button>`;
+}
 
   document.getElementById("modalContent").innerHTML=html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
   setTimeout(renderIcons,100);
+}
+
+function pickKategori(el, val){
+  document.querySelectorAll(".kategori-item").forEach(i=>{
+    i.classList.remove("active");
+  });
+
+  el.classList.add("active");
+  selectedKategori = val;
 }
 
 /* DROPDOWN */
@@ -877,16 +1051,35 @@ function closeModal(){
 
 function toggleList(){
 
+  let tahunNow = new Date().getFullYear();
+
   let html = `
-    <h3>Mutasi Transaksi</h3>
+    <div class="modal-header">Mutasi Transaksi</div>
 
-    <div class="filter-box">
-      <input id="search" placeholder="Cari transaksi, kategori..." oninput="renderMutasiModal()">
+    <input id="search" placeholder="Cari transaksi..." oninput="renderMutasiModal()">
 
-      <div class="filter-row">
-        <input type="month" id="filterBulan" onchange="renderMutasiModal()">
-        <input type="date" id="filterTanggal" onchange="renderMutasiModal()">
+    <div class="filter-modern">
+
+      <!-- BULAN -->
+      <div class="month-scroll">
+        ${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+          .map((m,i)=>`
+            <div class="month-item" onclick="setMonth(${i+1},this)">
+              ${m}
+            </div>
+        `).join("")}
       </div>
+
+      <!-- TANGGAL -->
+      <input type="date" id="filterTanggal" onchange="renderMutasiModal()">
+
+      <!-- TAHUN -->
+      <div class="year-list">
+        <div class="year-item" onclick="setYear(${tahunNow},this)">${tahunNow}</div>
+        <div class="year-item" onclick="setYear(${tahunNow-1},this)">${tahunNow-1}</div>
+        <div class="year-item" onclick="setYear(${tahunNow-2},this)">${tahunNow-2}</div>
+      </div>
+
     </div>
 
     <div id="mutasiContent"></div>
