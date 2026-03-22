@@ -596,31 +596,6 @@ svg {
   letter-spacing: 2px;
 }
 
-#notifBtn{
-  position:absolute;
-  top:20px;
-  right:20px;
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:rgba(255,255,255,0.2);
-  backdrop-filter:blur(10px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-}
-
-#notifBadge{
-  position:absolute;
-  top:-4px;
-  right:-4px;
-  background:#ef4444;
-  color:white;
-  font-size:10px;
-  padding:2px 6px;
-  border-radius:10px;
-}
 /* ============================= */
 /* CALCULATOR (PREMIUM UI) */
 /* ============================= */
@@ -803,10 +778,9 @@ svg {
   transition: 0.3s;
 }
 
-/* HEADER */
 .top-header{
   position:absolute;
-  top:20px;
+  top:24px;
   left:20px;
   right:20px;
   display:flex;
@@ -814,14 +788,13 @@ svg {
   z-index:10;
 }
 
-/* GROUP KANAN */
 .right-group{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
-/* BUTTON BASE */
+/* tombol bulat */
 #loginBtn,
 #profileBtn,
 #notifBtn{
@@ -832,29 +805,33 @@ svg {
   align-items:center;
   justify-content:center;
   cursor:pointer;
-  position:relative; /* 🔥 penting buat badge */
+  position:relative;
 }
 
-/* LOGIN & NOTIF STYLE */
+/* login & notif */
 #loginBtn,
 #notifBtn{
   background:rgba(255,255,255,0.2);
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(12px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* PROFILE */
+/* profile fix */
 #profileBtn{
   overflow:hidden;
   display:none;
+  padding:0;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
 }
 
 #profileBtn img{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
 }
 
-/* BADGE */
+/* badge */
 #notifBadge{
   position:absolute;
   top:-4px;
