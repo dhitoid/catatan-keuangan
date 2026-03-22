@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <script src="https://unpkg.com/feather-icons"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
-<title>MyFinance DT Pro</title>
+<!-- FIREBASE CDN (WAJIB ADA DI ATAS SCRIPT KAMU) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script><title>MyFinance DT Pro</title>
 
 <style>
 html, body {
@@ -925,25 +925,10 @@ let selectedYear = null;
 let selectedBudgetKategori = null;
 let calcInput = "";
 let calcHistory = [];
-let currentUser = null;
-
-auth.onAuthStateChanged(user => {
-  if(user){
-    currentUser = user;
-
-    document.getElementById("loginBtn").style.display = "none";
-
-    loadDataCloud(user.uid);
-    updateUserUI(user);
-
-  } else {
-    document.getElementById("loginBtn").style.display = "block";
-  }
-});
 
 const firebaseConfig = {
   apiKey: "AIzaSyCHPhlOsa6Qkk_AWSGA88jfgj0K0XCt6e4",
-  authDomain: "http://myfinancedt.firebaseapp.com",
+  authDomain: "myfinancedt.firebaseapp.com",
   databaseURL: "https://myfinancedt-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "myfinancedt",
   storageBucket: "myfinancedt.firebasestorage.app",
@@ -957,8 +942,38 @@ const auth = firebase.auth();
 const db = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
 
+let currentUser = null;
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    currentUser = user;
+
+    document.getElementById("loginBtn").style.display = "none";
+
+    updateUserUI(user);
+    loadUserProfile(user.uid);
+    loadDataCloud(user.uid);
+
+  } else {
+    currentUser = null;
+
+    document.getElementById("loginBtn").style.display = "block";
+
+    // reset UI
+    document.getElementById("userPhoto").src = "";
+    document.getElementById("profilePhoto").src = "";
+    document.getElementById("userName").innerText = "Belum login";
+  }
+});
+
 function loginGoogle(){
-  auth.signInWithPopup(provider);
+  auth.signInWithPopup(provider)
+    .then(res => {
+      console.log("Login sukses:", res.user);
+    })
+    .catch(err => {
+      console.error("Login error:", err);
+    });
 }
 
 function updateUserUI(user){
@@ -967,18 +982,45 @@ function updateUserUI(user){
   document.getElementById("userName").innerText = user.displayName;
 }
 
-function openProfileModal(){
-  document.getElementById("profileModal").style.display = "block";
+function loadUserProfile(uid){
+  db.ref("users/" + uid + "/customName").on("value", snap=>{
+    const customName = snap.val();
+
+    if(customName){
+      document.getElementById("userName").innerText = customName;
+    }
+  });
 }
+
+function openProfileModal(){
+  document.getElementById("profileModal").style.display = "
 
 function saveName(){
   const newName = document.getElementById("editName").value;
 
+  if(!newName){
+    alert("Nama tidak boleh kosong");
+    return;
+  }
+
   db.ref("users/" + currentUser.uid + "/customName").set(newName);
+
+  alert("Nama berhasil disimpan");
 }
 
 function logout(){
-  auth.signOut();
+  auth.signOut().then(()=>{
+    alert("Logout berhasil");
+    document.getElementById("profileModal").style.display = "none";
+  });
+}
+
+function openProfileModal(){
+  document.getElementById("profileModal").style.display = "block";
+}
+
+function closeProfileModal(){
+  document.getElementById("profileModal").style.display = "none";
 }
 
 function openCalculator(){
