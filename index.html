@@ -768,11 +768,13 @@ svg {
 
 .history-content{
   background: rgba(255,255,255,0.05);
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 12px;
-  transition: transform 0.2s ease;
-  z-index: 2;
+
   position: relative;
+  z-index: 2;
+
+  transition: transform 0.25s ease;
 }
 
 .history-delete{
@@ -782,16 +784,14 @@ svg {
   bottom: 0;
   width: 70px;
 
-  background: #ef4444;
+  background: linear-gradient(145deg, #ef4444, #b91c1c);
   color: white;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: bold;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  border-radius: 12px;
 }
 
 .calc-history-item.removing{
@@ -947,10 +947,10 @@ function updateHistory(){
 
   el.innerHTML = calcHistory.map((item, index) => `
     <div class="calc-history-item" data-index="${index}">
+      <div class="history-delete" onclick="deleteHistory(${index})">Hapus</div>
       <div class="history-content">
         ${item.expr} = <b>${item.result}</b>
       </div>
-      <div class="history-delete">Hapus</div>
     </div>
   `).join("");
 
@@ -958,6 +958,8 @@ function updateHistory(){
 
   initSwipeEvents();
 }
+
+let openedItem = null;
 
 function initSwipeEvents(){
   const items = document.querySelectorAll(".calc-history-item");
@@ -968,11 +970,15 @@ function initSwipeEvents(){
     let isSwiping = false;
 
     const content = item.querySelector(".history-content");
-    const index = item.getAttribute("data-index");
 
     item.addEventListener("touchstart", (e)=>{
       startX = e.touches[0].clientX;
       isSwiping = true;
+
+      // tutup item lain
+      if(openedItem && openedItem !== content){
+        openedItem.style.transform = "translateX(0)";
+      }
     });
 
     item.addEventListener("touchmove", (e)=>{
@@ -981,8 +987,10 @@ function initSwipeEvents(){
       currentX = e.touches[0].clientX;
       let diff = currentX - startX;
 
-      if(diff < 0){ // swipe kiri
-        content.style.transform = `translateX(${diff}px)`;
+      if(diff < 0){
+        // batas max -70px
+        let move = Math.max(diff, -70);
+        content.style.transform = `translateX(${move}px)`;
       }
     });
 
@@ -991,33 +999,28 @@ function initSwipeEvents(){
 
       let diff = currentX - startX;
 
-      if(diff < -60){
-        // hapus item
-        deleteHistory(index);
+      if(diff < -40){
+        // buka penuh
+        content.style.transform = "translateX(-70px)";
+        openedItem = content;
       }else{
+        // balik
         content.style.transform = "translateX(0)";
+        openedItem = null;
       }
     });
 
-    // klik normal → pakai history
+    // klik isi → pakai history
     content.addEventListener("click", ()=>{
+      const index = item.getAttribute("data-index");
       useHistory(calcHistory[index].result);
     });
   });
 }
 
 function deleteHistory(index){
-  const items = document.querySelectorAll(".calc-history-item");
-  const el = items[index];
-
-  if(el){
-    el.classList.add("removing");
-
-    setTimeout(()=>{
-      calcHistory.splice(index, 1);
-      updateHistory();
-    }, 250);
-  }
+  calcHistory.splice(index, 1);
+  updateHistory();
 }
 
 function useHistory(val){
