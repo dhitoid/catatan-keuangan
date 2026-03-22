@@ -638,6 +638,10 @@ function applyFilter(arr){
 
 /* RENDER */
 function render(){
+  const eye = document.getElementById("eyeIcon");
+  if(eye){
+    eye.setAttribute("data-feather", hideBalance ? "eye-off" : "eye");
+  }
   let saldo = saldoManual;
 
   data.forEach(d=>{
@@ -928,11 +932,17 @@ function toggleSaldo(){
 
   hideBalance = !hideBalance;
 
-  // animasi icon
   const eye = document.getElementById("eyeIcon");
+
   if(eye){
     eye.classList.add("eye-anim");
-    setTimeout(()=>eye.classList.remove("eye-anim"),300);
+    eye.setAttribute("data-feather", hideBalance ? "eye-off" : "eye");
+    setTimeout(()=>{
+      renderIcons();
+    },50);
+    setTimeout(()=>{
+      eye.classList.remove("eye-anim");
+    },300);
   }
 
   render();
