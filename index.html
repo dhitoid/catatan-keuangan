@@ -149,6 +149,8 @@ button:active{
   position:fixed;
   bottom:-100%;
   width:100%;
+  max-height:85vh; /* ✅ penting */
+  overflow-y:auto; /* ✅ scroll */
   background:white;
   padding:20px;
   border-radius:25px 25px 0 0;
@@ -368,6 +370,7 @@ button:active{
   <div class="card">
     <small>Saldo Aktif</small>
     <div class="saldo" id="saldo">Rp 0</div>
+    <div id="dashboardHome" style="margin:20px;"></div>
     <div class="eye" onclick="toggleSaldo()">👁️</div>
   </div>
 
@@ -402,7 +405,7 @@ button:active{
   </div>
 </div>
 
-<div class="list" id="list"></div>
+<div class="list" id="list" style="display:none;"></div>
 </div>
 
 <div class="nav">
@@ -432,7 +435,7 @@ try{
 }
 let notifFilter = "all";
 let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
-let showSaldo = true;
+let showSaldo = false;
 let selectedTipe="masuk";
 let selectedKategori="lainnya";
 let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
@@ -518,9 +521,7 @@ function render(){
 
   animateSaldo(saldo);
 
-  let filtered = applyFilter(data);
-
-  renderMutasi(filtered);
+  renderDashboardHome(); // ✅ TAMBAHAN
 }
 
 /* MUTASI */
@@ -709,8 +710,70 @@ function closeModal(){
 }
 
 function toggleList(){
-  let l=document.getElementById("list");
-  l.style.display="block";
+
+  let html = `
+    <h3>Mutasi Transaksi</h3>
+
+    <div class="filter-box">
+      <input id="search" placeholder="🔍 Cari transaksi..." oninput="renderMutasiModal()">
+
+      <div class="filter-row">
+        <input type="month" id="filterBulan" onchange="renderMutasiModal()">
+        <input type="date" id="filterTanggal" onchange="renderMutasiModal()">
+      </div>
+    </div>
+
+    <div id="mutasiContent"></div>
+  `;
+
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+
+  renderMutasiModal();
+}
+
+function renderMutasiModal(){
+
+  let filtered = applyFilter(data);
+  let grouped = {};
+
+  filtered.slice().reverse().forEach(d=>{
+    let tgl = formatTanggal(d.time);
+    if(!grouped[tgl]) grouped[tgl]=[];
+    grouped[tgl].push(d);
+  });
+
+  let html="";
+
+  for(let tgl in grouped){
+    html+=`
+    <div style="margin-bottom:15px;">
+      <div style="color:#64748b;font-size:12px;margin-bottom:5px;">
+        ${tgl}
+      </div>
+    `;
+
+    grouped[tgl].forEach(d=>{
+      html+=`
+      <div class="item">
+        <div>
+          <div>${d.ket}</div>
+          <div style="font-size:11px;color:#64748b;">
+            ${formatJam(d.time)} • ${d.kategori||"-"}
+          </div>
+        </div>
+
+        <div class="${d.tipe}">
+          ${d.tipe==="masuk"?"+":"-"}${rupiah(d.nominal)}
+        </div>
+      </div>`;
+    });
+
+    html+=`</div>`;
+  }
+
+  document.getElementById("mutasiContent").innerHTML = html;
 }
 
 function resetData(){
@@ -1150,6 +1213,47 @@ function openDashboard(){
   document.getElementById("modalContent").innerHTML = html;
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+}
+
+function renderDashboardHome(){
+
+  let totalMasuk = 0;
+  let totalKeluar = 0;
+  let kategori = {};
+
+  data.forEach(d=>{
+    if(d.tipe === "masuk") totalMasuk += d.nominal;
+    else totalKeluar += d.nominal;
+
+    if(!kategori[d.kategori]) kategori[d.kategori] = 0;
+    kategori[d.kategori] += d.nominal;
+  });
+
+  let saldo = saldoManual;
+  data.forEach(d=>{
+    saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
+  });
+
+  let topKategori = "-";
+  let max = 0;
+
+  for(let k in kategori){
+    if(kategori[k] > max){
+      max = kategori[k];
+      topKategori = k;
+    }
+  }
+
+  let html = `
+  <div class="card" style="margin:0;">
+    <small>AI Insight</small>
+    <div style="margin-top:10px;font-size:14px;line-height:1.5;">
+      ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
+    </div>
+  </div>
+  `;
+
+  document.getElementById("dashboardHome").innerHTML = html;
 }
 
 function generateInsightText(masuk, keluar, kategori, saldo){
