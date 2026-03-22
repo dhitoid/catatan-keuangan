@@ -581,7 +581,7 @@ function tambahSaldo(){
   saldoManual += n;
   localStorage.setItem("saldoManual", saldoManual);
 
-  showToast("Saldo berhasil ditambahkan 💰","success");
+  showToast("Saldo berhasil ditambahkan 💰","success", n, "masuk");
 
   closeModal();
   render();
@@ -625,11 +625,11 @@ function tambah(){
   localStorage.setItem("data", JSON.stringify(data));
 
   // NOTIF BERBEDA
-  if(selectedTipe === "masuk"){
-    showToast("Pemasukan berhasil ditambahkan 💸","success");
-  }else{
-    showToast("Pengeluaran tercatat ⚠️","error");
-  }
+if(selectedTipe === "masuk"){
+  showToast("Pemasukan berhasil ditambahkan 💸","success", nominal, "masuk");
+}else{
+  showToast("Pengeluaran tercatat ⚠️","error", nominal, "keluar");
+}
   
   closeModal();
   render();
@@ -667,18 +667,20 @@ function vibrate(){
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
-function showToast(message, type="info"){
+function showToast(message, type="info", nominal=0, tipeTransaksi=null){
   const container = document.getElementById("toast-container");
 
-  // SAVE HISTORY
+  // SAVE HISTORY (UPGRADE)
   notifHistory.unshift({
     message,
     type,
+    nominal,
+    tipeTransaksi,
     time:new Date().toISOString()
   });
 
   localStorage.setItem("notifHistory", JSON.stringify(notifHistory));
-
+  
   const toast = document.createElement("div");
   toast.className = "toast " + type;
   toast.innerText = message;
@@ -742,17 +744,36 @@ function openHistory(){
   }
 
   notifHistory.forEach(n=>{
-    html += `
-    <div class="item">
-      <div>
-        <div style="font-size:14px;">${n.message}</div>
-        <div style="font-size:11px;color:#64748b;">
-          ${formatTanggal(n.time)} • ${formatJam(n.time)}
-        </div>
+  let warna = "#0f5ea8";
+  let simbol = "";
+
+  if(n.tipeTransaksi === "masuk"){
+    warna = "#16a34a";
+    simbol = "+";
+  }else if(n.tipeTransaksi === "keluar"){
+    warna = "#dc2626";
+    simbol = "-";
+  }
+
+  html += `
+  <div class="item">
+    <div>
+      <div style="font-size:14px;">${n.message}</div>
+      <div style="font-size:11px;color:#64748b;">
+        ${formatTanggal(n.time)} • ${formatJam(n.time)}
       </div>
     </div>
-    `;
-  });
+
+    ${
+      n.nominal
+      ? `<div style="color:${warna};font-weight:600;">
+          ${simbol}${rupiah(n.nominal)}
+        </div>`
+      : ""
+    }
+  </div>
+  `;
+});
 
   html += `<button onclick="clearNotif()">Hapus Semua</button>`;
 
@@ -823,6 +844,12 @@ function generateInsight(){
   if(saldo < 50000){
     showToast("💸 Saldo kamu mulai menipis","error");
   }
+}
+
+function shortRupiah(n){
+  if(n >= 1000000) return "Rp " + (n/1000000).toFixed(1)+"jt";
+  if(n >= 1000) return "Rp " + (n/1000).toFixed(0)+"rb";
+  return rupiah(n);
 }
 
 document.addEventListener("click", function(e){
