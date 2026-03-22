@@ -80,33 +80,37 @@ body{
 .menu::-webkit-scrollbar{display:none;}
 
 .menu-item{
-  min-width:85px;
-  background:white;
-  color:black;
-  border-radius:18px;
-  padding:12px;
+  min-width:90px;
+  background:rgba(255,255,255,0.9);
+  backdrop-filter:blur(20px);
+  color:#0f172a;
+  border-radius:20px;
+  padding:14px 10px;
   text-align:center;
-  font-size:13px;
-  font-weight:500;
-  box-shadow:0 6px 18px rgba(0,0,0,0.1);
+  font-size:12px;
+  font-weight:600;
+  box-shadow:0 8px 25px rgba(0,0,0,0.08);
+  border:1px solid rgba(255,255,255,0.6);
+  transition:all 0.2s ease;
 }
 
 .menu-item:active{
-  transform:scale(0.94);
+  transform:scale(0.92);
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* ICON */
 .icon{
-  width:50px;
-  height:50px;
-  background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
-  color:white;
-  border-radius:50%;
-  margin:0 auto 6px;
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  margin:0 auto 8px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:20px;
+  font-size:22px;
+
+  background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
+  box-shadow:0 6px 18px rgba(29,155,240,0.35);
 }
 
 /* LIST */
@@ -120,8 +124,8 @@ body{
   margin-bottom:10px;
   display:flex;
   justify-content:space-between;
-  animation:fadeIn 0.3s ease;
   box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  animation:fadeIn 0.25s ease;
 }
 
 .masuk{color:#16a34a;}
@@ -211,19 +215,25 @@ button:active{
 /* FILTER */
 .filter-box{
   margin:20px;
-  background:white;
-  padding:15px;
-  border-radius:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+  background:rgba(255,255,255,0.9);
+  backdrop-filter:blur(20px);
+  padding:16px;
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
 .filter-box input{
   width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #eee;
-  margin-bottom:10px;
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  background:#f1f5f9;
   font-size:14px;
+  outline:none;
+}
+
+.filter-box input:focus{
+  background:#e2e8f0;
 }
 
 .filter-row{
@@ -680,7 +690,7 @@ function toggleList(){
     <h3>Mutasi Transaksi</h3>
 
     <div class="filter-box">
-      <input id="search" placeholder="🔍 Cari transaksi..." oninput="renderMutasiModal()">
+      <input id="search" placeholder="Cari transaksi, kategori..." oninput="renderMutasiModal()">
 
       <div class="filter-row">
         <input type="month" id="filterBulan" onchange="renderMutasiModal()">
@@ -1144,7 +1154,7 @@ function openDashboard(){
     <div class="card" style="margin:0 0 15px 0;">
       <small>Saldo Sekarang</small>
       <div class="saldo">${rupiah(saldo)}</div>
-      <canvas id="mainChart" style="height:180px;width:100%;display:block;"></canvas>
+      <canvas id="mainChart" height="180"></canvas>
     </div>
 
     <div class="item">
@@ -1262,8 +1272,9 @@ function drawChart(canvasId){
   const dpr = window.devicePixelRatio || 1;
 
   canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+  canvas.height = (canvas.height || 160) * dpr;
 
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.scale(dpr, dpr);
 
   const width = rect.width;
@@ -1453,7 +1464,7 @@ function renderDashboardHome(){
       <button onclick="setChartMode('yearly')" style="flex:1;opacity:${chartMode==='yearly'?1:0.5}">Tahunan</button>
     </div>
 
-    <canvas id="miniChart" style="height:160px;width:100%;"></canvas>
+    <canvas id="miniChart" height="160"></canvas>
 
     <div style="margin-top:10px;font-size:14px;line-height:1.5;">
       ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
@@ -1470,28 +1481,42 @@ function renderDashboardHome(){
 
 function generateInsightText(masuk, keluar, kategori, saldo){
 
-  let insight = "";
+  let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
 
   if(keluar > masuk){
-    insight += `<p style="color:#dc2626;">⚠️ Pengeluaran kamu lebih besar dari pemasukan</p>`;
+    html += `
+    <div style="padding:10px;border-radius:12px;background:#fee2e2;color:#dc2626;">
+      ⚠️ Pengeluaran lebih besar dari pemasukan
+    </div>`;
   }else{
-    insight += `<p style="color:#16a34a;">✅ Keuangan kamu masih aman</p>`;
+    html += `
+    <div style="padding:10px;border-radius:12px;background:#dcfce7;color:#16a34a;">
+      ✅ Keuangan masih stabil
+    </div>`;
   }
 
   if(kategori !== "-"){
-    insight += `<p>💸 Kamu paling sering menghabiskan uang di <b>${kategori}</b></p>`;
+    html += `
+    <div style="padding:10px;border-radius:12px;background:#e0f2fe;color:#0369a1;">
+      💸 Pengeluaran terbesar di <b>${kategori}</b>
+    </div>`;
   }
 
   if(saldo < 50000){
-    insight += `<p style="color:#dc2626;">💀 Saldo kamu hampir habis</p>`;
-  }else if(saldo > 1000000){
-    insight += `<p style="color:#16a34a;">🔥 Saldo kamu sehat!</p>`;
+    html += `
+    <div style="padding:10px;border-radius:12px;background:#fee2e2;color:#dc2626;">
+      ❌ Saldo hampir habis
+    </div>`;
   }
 
-  // Rekomendasi AI
-  insight += `<p style="margin-top:10px;">💡 Saran: Kurangi pengeluaran di kategori ${kategori} dan coba menabung minimal 20% dari pemasukan.</p>`;
+  html += `
+  <div style="padding:10px;border-radius:12px;background:#fef9c3;color:#92400e;">
+    💡 Tips: Sisihkan minimal 20% pemasukan untuk tabungan
+  </div>`;
 
-  return insight;
+  html += `</div>`;
+
+  return html;
 }
 
 document.addEventListener("click", function(e){
