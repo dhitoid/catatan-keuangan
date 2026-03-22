@@ -824,19 +824,78 @@ svg {
     <img id="userPhoto" src="">
   </div>
   
-  <button id="loginBtn" onclick="loginGoogle()">Login dengan Google</button>
-  
-  <div id="profileModal" style="display:none;">
-  <h3>Profil</h3>
+  <div id="topNav" style="
+  position:absolute;
+  top:20px;
+  left:20px;
+  display:flex;
+  gap:10px;
+  z-index:10;
+">
 
-  <img id="profilePhoto" width="60">
-  <p id="userName"></p>
+  <!-- LOGIN BUTTON -->
+  <div id="loginBtn" onclick="loginGoogle()" style="
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    backdrop-filter:blur(10px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  ">
+    <i data-feather="log-in"></i>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profileBtn" onclick="openProfileModal()" style="
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    overflow:hidden;
+    display:none;
+    cursor:pointer;
+  ">
+    <img id="userPhoto" style="width:100%;height:100%;object-fit:cover;">
+  </div>
+
+</div>
+  
+<div id="profileModal" class="modal">
+
+  <div class="modal-handle" onclick="closeProfileModal()"></div>
+
+  <div style="text-align:center;margin-bottom:15px;">
+    <img id="profilePhoto" style="
+      width:80px;
+      height:80px;
+      border-radius:50%;
+      object-fit:cover;
+      box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    ">
+    
+    <h3 id="userName" style="margin-top:10px;"></h3>
+  </div>
 
   <input type="text" id="editName" placeholder="Ubah nama">
 
-  <button onclick="saveName()">Simpan</button>
-  <button onclick="logout()">Logout</button>
-  <button onclick="loginGoogle()">Ganti Akun</button>
+  <button onclick="saveName()">Simpan Nama</button>
+
+  <button onclick="loginGoogle()" style="
+    margin-top:10px;
+    background:#0ea5e9;
+  ">
+    Ganti Akun
+  </button>
+
+  <button onclick="logout()" style="
+    margin-top:10px;
+    background:#ef4444;
+  ">
+    Logout
+  </button>
+
 </div>
 
   <div class="header">
@@ -952,6 +1011,7 @@ auth.getRedirectResult()
       loadDataCloud(result.user.uid);
 
       document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("profileBtn").style.display = "block";
     }
   })
   .catch((error) => {
@@ -965,6 +1025,7 @@ auth.onAuthStateChanged(user => {
     currentUser = user;
 
     document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("profileBtn").style.display = "block";
 
     updateUserUI(user);
     loadUserProfile(user.uid);
@@ -974,6 +1035,7 @@ auth.onAuthStateChanged(user => {
     currentUser = null;
 
     document.getElementById("loginBtn").style.display = "block";
+    document.getElementById("profileBtn").style.display = "none";
 
     // reset UI
     document.getElementById("userPhoto").src = "";
@@ -992,6 +1054,7 @@ function loginGoogle(){
       loadDataCloud(result.user.uid);
 
       document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("profileBtn").style.display = "block";
     })
     .catch(err => {
       console.error(err);
@@ -1003,6 +1066,9 @@ function updateUserUI(user){
   document.getElementById("userPhoto").src = user.photoURL;
   document.getElementById("profilePhoto").src = user.photoURL;
   document.getElementById("userName").innerText = user.displayName;
+
+  document.getElementById("profileBtn").style.display = "block";
+  document.getElementById("loginBtn").style.display = "none";
 }
 
 function loadUserProfile(uid){
@@ -1030,17 +1096,20 @@ function saveName(){
 
 function logout(){
   auth.signOut().then(()=>{
-    alert("Logout berhasil");
-    document.getElementById("profileModal").style.display = "none";
+    showToast("Logout berhasil","info");
+
+    closeProfileModal();
   });
 }
 
 function openProfileModal(){
-  document.getElementById("profileModal").style.display = "block";
+  document.getElementById("profileModal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
 }
 
 function closeProfileModal(){
-  document.getElementById("profileModal").style.display = "none";
+  document.getElementById("profileModal").classList.remove("active");
+  document.getElementById("backdrop").classList.remove("active");
 }
 
 function openCalculator(){
