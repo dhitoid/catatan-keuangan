@@ -835,13 +835,12 @@ function renderBudgetUI(){
     html += `
     <div style="margin-bottom:14px;">
 
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">   <div style="font-weight:500;">${k}</div>   <div style="font-size:11px;color:#64748b;">     ${Math.round(percent)}% • ${rupiah(used)} / ${rupiah(limit)}   </div> </div>
-        <div style="font-weight:500;">${k}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">   
+        <div style="font-weight:500;">${k}</div>   
         <div style="font-size:11px;color:#64748b;">
-          ${rupiah(used)} / ${rupiah(limit)}
-        </div>
+          ${Math.round(percent)}% • ${rupiah(used)} / ${rupiah(limit)}
+        </div> 
       </div>
-      
       <div style="font-size:11px;color:${color};margin-top:4px;">
         ${status}
       </div>
@@ -2325,13 +2324,11 @@ document.addEventListener("click", function(e){
 });
 
 document.addEventListener("input", function(e){
-  if(e.target.type === "number"){
-    if(e.target.value < 0) e.target.value = "";
-  }
-});
-
-document.addEventListener("input", function(e){
-  if(   e.target.id === "nominal" ||   e.target.id === "saldoInput" ||   e.target.id === "budgetNominal" ){   formatInputRupiah(e.target); }
+  if(
+    e.target.id === "nominal" ||
+    e.target.id === "saldoInput" ||
+    e.target.id === "budgetNominal"
+  ){
     formatInputRupiah(e.target);
   }
 });
