@@ -1307,84 +1307,155 @@ function drawChart(canvasId){
   const width = rect.width;
   const height = rect.height;
 
-  ctx.clearRect(0,0,width,height);
+  let activeIndex = -1;
 
   const {labels, masuk, keluar} = getChartData();
-
   let max = Math.max(...masuk, ...keluar, 1000);
 
   const padding = 20;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
-
   const stepX = chartWidth / ((labels.length - 1) || 1);
 
-  function drawArea(data, colorTop, colorBottom){
-
-    const gradient = ctx.createLinearGradient(0,0,0,height);
-    gradient.addColorStop(0, colorTop);
-    gradient.addColorStop(1, colorBottom);
-
-    ctx.beginPath();
-
-    data.forEach((val,i)=>{
-      const x = padding + i * stepX;
-      const y = padding + chartHeight - (val / max * chartHeight);
-
-      if(i === 0){
-        ctx.moveTo(x,y);
-      }else{
-        const prevX = padding + (i-1)*stepX;
-        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
-
-        const cx = (prevX + x)/2;
-
-        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
-        ctx.quadraticCurveTo(x, y, x, y);
-      }
+  function getPoints(data){
+    return data.map((val,i)=>{
+      return {
+        x: padding + i * stepX,
+        y: padding + chartHeight - (val / max * chartHeight),
+        value: val
+      };
     });
-
-    // CLOSE AREA
-    ctx.lineTo(padding + (data.length-1)*stepX, height - padding);
-    ctx.lineTo(padding, height - padding);
-    ctx.closePath();
-
-    ctx.fillStyle = gradient;
-    ctx.fill();
   }
 
-  function drawLine(data, color){
+  const masukPoints = getPoints(masuk);
+  const keluarPoints = getPoints(keluar);
+
+  function drawSmoothLine(points, color){
     ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;
 
-    data.forEach((val,i)=>{
-      const x = padding + i * stepX;
-      const y = padding + chartHeight - (val / max * chartHeight);
-
+    points.forEach((p,i)=>{
       if(i === 0){
-        ctx.moveTo(x,y);
+        ctx.moveTo(p.x, p.y);
       }else{
-        const prevX = padding + (i-1)*stepX;
-        const prevY = padding + chartHeight - (data[i-1] / max * chartHeight);
+        const prev = points[i-1];
+        const cx = (prev.x + p.x)/2;
 
-        const cx = (prevX + x)/2;
-
-        ctx.quadraticCurveTo(prevX, prevY, cx, (prevY+y)/2);
-        ctx.quadraticCurveTo(x, y, x, y);
+        ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + p.y)/2);
+        ctx.quadraticCurveTo(p.x, p.y, p.x, p.y);
       }
     });
 
     ctx.stroke();
   }
 
-  // AREA (BANK STYLE)
-  drawArea(masuk, "rgba(34,197,94,0.4)", "rgba(34,197,94,0)");
-  drawArea(keluar, "rgba(239,68,68,0.4)", "rgba(239,68,68,0)");
+  function drawGradient(points, color){
+    const gradient = ctx.createLinearGradient(0,0,0,height);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
 
-  // LINE
-  drawLine(masuk, "#22c55e");
-  drawLine(keluar, "#ef4444");
+    ctx.beginPath();
+
+    points.forEach((p,i)=>{
+      if(i === 0){
+        ctx.moveTo(p.x, p.y);
+      }else{
+        const prev = points[i-1];
+        const cx = (prev.x + p.x)/2;
+
+        ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + p.y)/2);
+        ctx.quadraticCurveTo(p.x, p.y, p.x, p.y);
+      }
+    });
+
+    ctx.lineTo(points[points.length-1].x, height - padding);
+    ctx.lineTo(points[0].x, height - padding);
+    ctx.closePath();
+
+    ctx.fillStyle = gradient;
+    ctx.fill();
+  }
+
+  function drawDots(points, color){
+    points.forEach((p,i)=>{
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, activeIndex === i ? 5 : 3, 0, Math.PI*2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, activeIndex === i ? 3 : 2, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  function drawTooltip(index){
+    if(index < 0) return;
+
+    const p = masukPoints[index];
+
+    const text = `${labels[index]} • ${shortRupiah(masuk[index])}`;
+
+    ctx.font = "12px sans-serif";
+    const paddingBox = 8;
+    const textWidth = ctx.measureText(text).width;
+
+    const x = p.x - textWidth/2 - paddingBox;
+    const y = p.y - 35;
+
+    // box
+    ctx.fillStyle = "rgba(0,0,0,0.75)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, textWidth + paddingBox*2, 24, 8);
+    ctx.fill();
+
+    // text
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, x + paddingBox, y + 16);
+  }
+
+  function render(){
+    ctx.clearRect(0,0,width,height);
+
+    // area
+    drawGradient(masukPoints, "rgba(34,197,94,0.35)");
+    drawGradient(keluarPoints, "rgba(239,68,68,0.25)");
+
+    // line
+    drawSmoothLine(masukPoints, "#22c55e");
+    drawSmoothLine(keluarPoints, "#ef4444");
+
+    // dots
+    drawDots(masukPoints, "#22c55e");
+
+    // tooltip
+    drawTooltip(activeIndex);
+  }
+
+  render();
+
+  // 👉 TOUCH INTERACTION (BCA STYLE)
+  canvas.addEventListener("touchmove", e=>{
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+
+    const x = touch.clientX - rect.left;
+
+    let index = Math.round((x - padding) / stepX);
+
+    if(index >= 0 && index < labels.length){
+      activeIndex = index;
+    }
+
+    render();
+  });
+
+  canvas.addEventListener("touchend", ()=>{
+    activeIndex = -1;
+    render();
+  });
 }
 
 function renderDashboardHome(){
