@@ -592,12 +592,43 @@ svg {
 .balance-mask{
   letter-spacing: 2px;
 }
+
+#notifBtn{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.2);
+  backdrop-filter:blur(10px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+#notifBadge{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  background:#ef4444;
+  color:white;
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="home">
+  
+  <div id="notifBtn" onclick="openHistory()">
+    <i data-feather="bell"></i>
+    <span id="notifBadge"></span>
+  </div>
 
   <div class="header">
     <h2 id="greeting"></h2>
@@ -624,10 +655,10 @@ svg {
     <div class="icon"><i data-feather="file-text"></i></div>
     Mutasi
   </div>
-  <div class="menu-item" onclick="openHistory()">
+  <!-- <div class="menu-item" onclick="openHistory()">
     <div class="icon"><i data-feather="bell"></i></div>
     Notif
-  </div>
+  </div> -->
   <div class="menu-item" onclick="openBudget()">
     <div class="icon"><i data-feather="sliders"></i></div>
     Budget
@@ -681,6 +712,17 @@ let selectedKategori="lainnya";
 let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
 let selectedMonth = null;
 let selectedYear = null;
+let selectedBudgetKategori = null;
+
+function toggleKategoriBudget(){
+  document.getElementById("dropdownKatBudget").classList.toggle("show");
+}
+
+function setKategoriBudget(val){
+  selectedBudgetKategori = val;
+  document.querySelector(".select-kategori").innerText = val;
+  document.getElementById("dropdownKatBudget").classList.remove("show");
+}
 
 function setMonth(m, el){
   selectedMonth = m;
@@ -706,6 +748,18 @@ function setYear(y, el){
 
 function updateBadge(){
   localStorage.setItem("unreadNotif", unreadNotif);
+}
+
+function renderNotifBadge(){
+  const el = document.getElementById("notifBadge");
+  if(!el) return;
+
+  if(unreadNotif > 0){
+    el.style.display = "block";
+    el.innerText = unreadNotif;
+  }else{
+    el.style.display = "none";
+  }
 }
 
 function setBudget(kategori, nominal){
@@ -770,6 +824,9 @@ function renderBudgetUI(){
     let used = usage[k] || 0;
 
     let percent = Math.min((used / limit) * 100, 100);
+    let status = "Aman";
+    if(percent > 70) status = "Hampir Limit ⚠️";
+    if(percent >= 100) status = "Melebihi ❌";
 
     let color = "#22c55e"; // aman
     if(percent > 70) color = "#f59e0b";
@@ -778,11 +835,15 @@ function renderBudgetUI(){
     html += `
     <div style="margin-bottom:14px;">
 
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">   <div style="font-weight:500;">${k}</div>   <div style="font-size:11px;color:#64748b;">     ${Math.round(percent)}% • ${rupiah(used)} / ${rupiah(limit)}   </div> </div>
         <div style="font-weight:500;">${k}</div>
         <div style="font-size:11px;color:#64748b;">
           ${rupiah(used)} / ${rupiah(limit)}
         </div>
+      </div>
+      
+      <div style="font-size:11px;color:${color};margin-top:4px;">
+        ${status}
       </div>
 
       <div style="
@@ -814,7 +875,19 @@ function openBudget(){
   let html = `
   <div class="modal-header">Atur Budget</div>
 
-  <input id="budgetKategori" placeholder="Kategori (contoh: makan)">
+  <div class="select select-kategori" onclick="toggleKategoriBudget()">
+    Pilih Kategori
+  </div>
+
+  <div class="options" id="dropdownKatBudget">
+    ${[
+      "makan","transport","belanja","tagihan",
+      "hiburan","gaji","investasi","kesehatan","pendidikan"
+    ].map(k=>`
+      <div onclick="setKategoriBudget('${k}')">${k}</div>
+    `).join("")}
+  </div>
+
   <input id="budgetNominal" type="text" placeholder="Nominal" inputmode="numeric">
 
   <button onclick="saveBudget()">Simpan</button>
@@ -826,15 +899,14 @@ function openBudget(){
 }
 
 function saveBudget(){
-  let kategori = document.getElementById("budgetKategori").value.trim();
   let nominal = getAngka(document.getElementById("budgetNominal"));
 
-  if(!kategori || !nominal){
-    showToast("Isi semua field","error");
+  if(!selectedBudgetKategori || !nominal){
+    showToast("Pilih kategori & isi nominal","error");
     return;
   }
 
-  setBudget(kategori, nominal);
+  setBudget(selectedBudgetKategori, nominal);
   closeModal();
 }
 
@@ -947,6 +1019,7 @@ function render(){
   }
 
   renderDashboardHome();
+  renderNotifBadge();
 
   setTimeout(renderIcons,50);
 }
@@ -1394,6 +1467,10 @@ function showToast(message, type="info", nominal=0, tipeTransaksi=null, ket=""){
       toast.style.transform = "";
     }
   });
+  
+  unreadNotif++;
+  updateBadge();
+  renderNotifBadge();
 
   // AUTO HIDE
   setTimeout(()=>{
@@ -2254,7 +2331,7 @@ document.addEventListener("input", function(e){
 });
 
 document.addEventListener("input", function(e){
-  if(e.target.id === "nominal" || e.target.id === "saldoInput"){
+  if(   e.target.id === "nominal" ||   e.target.id === "saldoInput" ||   e.target.id === "budgetNominal" ){   formatInputRupiah(e.target); }
     formatInputRupiah(e.target);
   }
 });
