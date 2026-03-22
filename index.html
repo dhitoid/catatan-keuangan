@@ -1285,22 +1285,57 @@ function openDashboard(){
   let progress = Math.min((saldo / 1000000) * 100, 100);
 
   let html = `
-  <h3>📊 AI Finance Dashboard</h3>
+  <h3 style="margin-bottom:10px;">📊 Dashboard AI</h3>
 
-  <div class="card" style="margin:15px 0;">
-    <small>Saldo Sekarang</small>
-    <div class="saldo">${rupiah(saldo)}</div>
+  <!-- 💳 BANK CARD -->
+  <div style="
+    position:relative;
+    border-radius:24px;
+    padding:20px;
+    color:white;
+    background:linear-gradient(135deg,#1e293b,#0f172a);
+    box-shadow:0 20px 50px rgba(0,0,0,0.4);
+    overflow:hidden;
+    margin-bottom:15px;
+  ">
 
-    <canvas id="mainChart" height="180" style="margin-top:10px;"></canvas>
+    <!-- glow -->
+    <div style="
+      position:absolute;
+      width:200px;
+      height:200px;
+      background:radial-gradient(circle,rgba(255,255,255,0.2),transparent);
+      top:-50px;
+      right:-50px;
+    "></div>
+
+    <div style="font-size:12px;opacity:0.7;">Balance</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;">
+      ${rupiah(saldo)}
+    </div>
+
+    <div style="margin-top:20px;font-size:12px;opacity:0.7;">
+      MyFinance Card
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:6px;">
+      <div style="letter-spacing:2px;">•••• •••• •••• 2026</div>
+      <div>VISA</div>
+    </div>
+
   </div>
 
+  <!-- 📈 CHART -->
+  <canvas id="mainChart" height="180" style="margin-bottom:10px;"></canvas>
+
+  <!-- STATS -->
   <div class="item">
-    <div>Total Pemasukan</div>
+    <div>Pemasukan</div>
     <div class="masuk">+${rupiah(totalMasuk)}</div>
   </div>
 
   <div class="item">
-    <div>Total Pengeluaran</div>
+    <div>Pengeluaran</div>
     <div class="keluar">-${rupiah(totalKeluar)}</div>
   </div>
 
@@ -1309,14 +1344,15 @@ function openDashboard(){
     <div>${topKategori}</div>
   </div>
 
+  <!-- PROGRESS -->
   <div style="margin:15px 0;">
     <div style="height:8px;background:#e5e7eb;border-radius:10px;">
       <div style="width:${progress}%;height:8px;background:#22c55e;border-radius:10px;"></div>
     </div>
-    <small style="font-size:11px;color:#64748b;">Progress finansial</small>
   </div>
 
-  <div style="margin-top:20px;">
+  <!-- AI -->
+  <div style="margin-top:10px;">
     <h4>🧠 Insight AI</h4>
     ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
   </div>
@@ -1326,10 +1362,7 @@ function openDashboard(){
   document.getElementById("modal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
 
-  setTimeout(()=>{
-    drawChart("mainChart");
-  },100);
-
+  setTimeout(()=> drawChart("mainChart"),100);
   setTimeout(renderIcons,100);
 }
 
@@ -1591,42 +1624,93 @@ function renderDashboardHome(){
   let recentHTML = "";
   recent.forEach(d=>{
     recentHTML += `
-    <div class="item">
-      <div>${d.ket}</div>
-      <div class="${d.tipe}">
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+      <div>
+        <div style="font-size:14px;font-weight:500;">${d.ket}</div>
+        <div style="font-size:11px;color:#94a3b8;">${d.kategori}</div>
+      </div>
+      <div class="${d.tipe}" style="font-weight:600;">
         ${d.tipe==="masuk"?"+":"-"}${rupiah(d.nominal)}
       </div>
     </div>`;
   });
 
   let html = `
-  <div class="card" style="margin:0 0 15px 0;">
-    <small>Ringkasan Keuangan</small>
-    <div style="display:flex;justify-content:space-between;margin-top:10px;">
-      <div class="masuk">+${rupiah(totalMasuk)}</div>
-      <div class="keluar">-${rupiah(totalKeluar)}</div>
+
+  <!-- 💎 SUMMARY CARD -->
+  <div style="
+    margin-bottom:16px;
+    padding:18px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
+    color:white;
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+  ">
+    <div style="font-size:12px;opacity:0.8;">Total Saldo</div>
+    <div style="font-size:26px;font-weight:700;margin-top:4px;">
+      ${rupiah(saldo)}
     </div>
 
-    <canvas id="miniChart" height="120" style="margin-top:10px;"></canvas>
+    <div style="display:flex;justify-content:space-between;margin-top:14px;">
+      <div>
+        <div style="font-size:11px;opacity:0.7;">Masuk</div>
+        <div style="color:#bbf7d0;font-weight:600;">+${rupiah(totalMasuk)}</div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;opacity:0.7;">Keluar</div>
+        <div style="color:#fecaca;font-weight:600;">-${rupiah(totalKeluar)}</div>
+      </div>
+    </div>
+
+    <canvas id="miniChart" height="100" style="margin-top:10px;"></canvas>
   </div>
 
-  <div class="card" style="margin:0 0 15px 0;">
-    <small>Insight Cepat</small>
+  <!-- 🧠 AI INSIGHT -->
+  <div style="
+    background:white;
+    border-radius:20px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.06);
+  ">
+    <div style="font-weight:600;margin-bottom:8px;">🧠 Insight AI</div>
     ${generateInsightText(totalMasuk, totalKeluar, topKategori, saldo)}
   </div>
 
-  <div class="card">
-    <small>Aktivitas Terakhir</small>
-    ${recentHTML || "<p style='font-size:12px;color:#64748b;'>Belum ada transaksi</p>"}
+  <!-- 📊 QUICK STATS -->
+  <div style="
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+  ">
+    <div style="flex:1;background:white;padding:14px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.05);">
+      <div style="font-size:11px;color:#64748b;">Top Kategori</div>
+      <div style="font-weight:600;">${topKategori}</div>
+    </div>
+
+    <div style="flex:1;background:white;padding:14px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.05);">
+      <div style="font-size:11px;color:#64748b;">Transaksi</div>
+      <div style="font-weight:600;">${data.length}</div>
+    </div>
   </div>
+
+  <!-- 🧾 RECENT -->
+  <div style="
+    background:white;
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.06);
+  ">
+    <div style="font-weight:600;margin-bottom:10px;">Aktivitas Terakhir</div>
+    ${recentHTML || "<p style='font-size:12px;color:#94a3b8;'>Belum ada transaksi</p>"}
+  </div>
+
   `;
 
   document.getElementById("dashboardHome").innerHTML = html;
 
-  setTimeout(()=>{
-    drawChart("miniChart"); // ✅ sekarang ada canvas nya
-  },100);
-
+  setTimeout(()=> drawChart("miniChart"),100);
   setTimeout(renderIcons,100);
 }
 
