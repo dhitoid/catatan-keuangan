@@ -378,6 +378,11 @@ let notifHistory = JSON.parse(localStorage.getItem("notifHistory")) || [];
 let showSaldo = true;
 let selectedTipe="masuk";
 let selectedKategori="lainnya";
+let unreadNotif = Number(localStorage.getItem("unreadNotif")) || 0;
+
+function updateBadge(){
+  localStorage.setItem("unreadNotif", unreadNotif);
+}
 
 /* FORMAT */
 function rupiah(n){
