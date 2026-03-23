@@ -889,16 +889,6 @@ svg {
 
 <div id="profileModal" class="modal">
   
-  <div id="cropModal" class="modal">
-  <div class="modal-handle" onclick="closeCrop()"></div>
-
-  <div class="modal-header">Crop Foto</div>
-
-  <img id="cropImage" style="width:100%; max-height:300px;">
-
-  <button onclick="saveCropped()">Simpan Foto</button>
-</div>
-
   <div class="modal-handle" onclick="closeProfileModal()"></div>
 
   <div style="text-align:center;margin-bottom:15px;">
@@ -933,6 +923,17 @@ svg {
   </button>
 
 </div>
+
+<div id="cropModal" class="modal">
+  <div class="modal-handle" onclick="closeCrop()"></div>
+
+  <div class="modal-header">Crop Foto</div>
+
+  <img id="cropImage" style="width:100%; max-height:300px;">
+
+  <button onclick="saveCropped()">Simpan Foto</button>
+</div>
+
 
   <div class="header">
     <h2 id="greeting"></h2>
