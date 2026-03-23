@@ -1082,54 +1082,18 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-document.getElementById("uploadPhoto").addEventListener("change", uploadPhoto);
-
-function uploadPhoto(e){
-  const file = e.target.files[0];
-  if(!file) return;
-
-  if(!currentUser){
-    alert("Harus login dulu");
-    return;
-  }
-
-  const ref = storage.ref("profile/" + currentUser.uid);
-
-  ref.put(file)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => {
-
-      // simpan ke database
-      db.ref("users/" + currentUser.uid).update({
-        photoURL: url
-      });
-
-      // update UI langsung
-      document.getElementById("userPhoto").src = url;
-      document.getElementById("profilePhoto").src = url;
-
-      showToast("Foto profile berhasil diupdate 📸","success");
-
-    })
-    .catch(err=>{
-      console.error(err);
-      showToast("Upload gagal","error");
-    });
-}
-
 function loadUserProfile(uid){
   db.ref("users/" + uid).on("value", snap=>{
     const data = snap.val();
-
     if(!data) return;
 
-    // custom name
+    // nama
     if(data.customName){
       document.getElementById("userName").innerText = data.customName;
       document.getElementById("headerName").innerText = data.customName;
     }
 
-    // 🔥 FOTO CUSTOM
+    // foto
     if(data.photoURL){
       document.getElementById("userPhoto").src = data.photoURL;
       document.getElementById("profilePhoto").src = data.photoURL;
@@ -1156,12 +1120,18 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e){
     document.getElementById("backdrop").classList.add("active");
 
     setTimeout(()=>{
-      cropper = new Cropper(img,{
-        aspectRatio:1, // 🔥 kotak (avatar)
-        viewMode:1,
-        autoCropArea:1,
-      });
-    },100);
+
+  if(cropper){
+    cropper.destroy();
+  }
+
+  cropper = new Cropper(img,{
+    aspectRatio:1,
+    viewMode:1,
+    autoCropArea:1,
+  });
+
+},100);
   };
 
   reader.readAsDataURL(file);
@@ -1247,18 +1217,6 @@ function updateUserUI(user){
 
   document.getElementById("profileBtn").style.display = "block";
   document.getElementById("loginBtn").style.display = "none";
-}
-
-function loadUserProfile(uid){
-  db.ref("users/" + uid + "/customName").on("value", snap=>{
-    const customName = snap.val();
-
-    if(customName){
-      document.getElementById("userName").innerText = customName;
-
-      document.getElementById("headerName").innerText = customName;
-    }
-  });
 }
 
 function saveName(){
