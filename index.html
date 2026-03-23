@@ -900,7 +900,7 @@ svg {
       object-fit:cover;
       box-shadow:0 10px 25px rgba(0,0,0,0.2);
     ">
-    <input type="file" id="uploadPhoto" accept="image/*" style="margin-top:10px;">
+    <input type="file" id="uploadPhoto" accept="image/*" style="display:none;">
     
     <h3 id="userName" style="margin-top:10px;"></h3>
   </div>
@@ -1123,21 +1123,37 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e){
 
     img.src = ev.target.result;
 
-    img.onload = () => {
-      cropper = new Cropper(img,{
-        aspectRatio:1,
-        viewMode:1,
-        autoCropArea:1,
-      });
+img.onload = () => {
+  cropper = new Cropper(img,{
+    aspectRatio:1,
+    viewMode:1,
+    autoCropArea:1,
+  });
 
-      // 🔥 baru buka modal setelah siap
-      document.getElementById("cropModal").classList.add("active");
-      document.getElementById("backdrop").classList.add("active");
-    };
+  // ❗ TAMBAH INI
+  closeProfileModal();
+
+  document.getElementById("cropModal").classList.add("active");
+  document.getElementById("backdrop").classList.add("active");
+};
   };
 
   reader.readAsDataURL(file);
 });
+
+function closeCrop(){
+  document.getElementById("cropModal").classList.remove("active");
+
+  // ❗ jangan langsung hapus backdrop kalau profile masih buka
+  if(!document.getElementById("profileModal").classList.contains("active")){
+    document.getElementById("backdrop").classList.remove("active");
+  }
+
+  if(cropper){
+    cropper.destroy();
+    cropper = null;
+  }
+}
 
 function saveCropped(){
   if(!cropper){
@@ -1258,16 +1274,6 @@ function updateProgressToast(toast, percent, isError=false, done=false){
 document.getElementById("profilePhoto").onclick = () => {
   document.getElementById("uploadPhoto").click();
 };
-
-function closeCrop(){
-  document.getElementById("cropModal").classList.remove("active");
-  document.getElementById("backdrop").classList.remove("active");
-
-  if(cropper){
-    cropper.destroy();
-    cropper = null;
-  }
-}
 
 function loginGoogle(){
   auth.signInWithPopup(provider)
