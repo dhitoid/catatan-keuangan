@@ -1113,26 +1113,31 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e){
   selectedFile = file;
 
   const reader = new FileReader();
-reader.onload = function(ev){
-  const img = document.getElementById("cropImage");
+  reader.onload = function(ev){
+    const img = document.getElementById("cropImage");
 
-  img.onload = () => {
-    if(cropper){
-      cropper.destroy();
-    }
+    img.onload = () => {
+      if(cropper){
+        cropper.destroy();
+      }
 
-    cropper = new Cropper(img,{
-      aspectRatio:1,
-      viewMode:1,
-      autoCropArea:1,
-    });
+      cropper = new Cropper(img,{
+        aspectRatio:1,
+        viewMode:1,
+        autoCropArea:1,
+      });
+    };
+
+    img.src = ev.target.result;
+
+    document.getElementById("cropModal").classList.add("active");
+    document.getElementById("backdrop").classList.add("active");
   };
 
-  img.src = ev.target.result;
+  // ✅ INI YANG KURANG
+  reader.readAsDataURL(file);
 
-  document.getElementById("cropModal").classList.add("active");
-  document.getElementById("backdrop").classList.add("active");
-};
+});
 
 function saveCropped(){
   if(!cropper) return;
