@@ -1124,17 +1124,19 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e){
     img.src = ev.target.result;
 
 img.onload = () => {
-  cropper = new Cropper(img,{
-    aspectRatio:1,
-    viewMode:1,
-    autoCropArea:1,
-  });
+  setTimeout(() => {
+    cropper = new Cropper(img,{
+      aspectRatio:1,
+      viewMode:1,
+      autoCropArea:1,
+    });
 
-  // ❗ TAMBAH INI
-  closeProfileModal();
+    closeProfileModal();
 
-  document.getElementById("cropModal").classList.add("active");
-  document.getElementById("backdrop").classList.add("active");
+    document.getElementById("cropModal").classList.add("active");
+    document.getElementById("backdrop").classList.add("active");
+
+  }, 50);
 };
   };
 
@@ -1146,8 +1148,8 @@ function closeCrop(){
 
   // ❗ jangan langsung hapus backdrop kalau profile masih buka
   if(!document.getElementById("profileModal").classList.contains("active")){
-    document.getElementById("backdrop").classList.remove("active");
-  }
+  document.getElementById("backdrop").classList.remove("active");
+}
 
   if(cropper){
     cropper.destroy();
@@ -1331,7 +1333,6 @@ function openProfileModal(){
 
 function closeProfileModal(){
   document.getElementById("profileModal").classList.remove("active");
-  document.getElementById("backdrop").classList.remove("active");
 }
 
 function openCalculator(){
