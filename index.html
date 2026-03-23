@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <script src="https://unpkg.com/feather-icons"></script>
-<!-- FIREBASE CDN (WAJIB ADA DI ATAS SCRIPT KAMU) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script><title>MyFinance DT Pro</title>
+<link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet"/>
+<script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
 
 <style>
 html, body {
@@ -848,6 +850,12 @@ svg {
   padding:2px 6px;
   border-radius:10px;
 }
+
+#uploadPhoto{
+  width:100%;
+  margin-top:10px;
+  font-size:12px;
+}
 </style>
 </head>
 
@@ -880,6 +888,16 @@ svg {
 </div>
 
 <div id="profileModal" class="modal">
+  
+  <div id="cropModal" class="modal">
+  <div class="modal-handle" onclick="closeCrop()"></div>
+
+  <div class="modal-header">Crop Foto</div>
+
+  <img id="cropImage" style="width:100%; max-height:300px;">
+
+  <button onclick="saveCropped()">Simpan Foto</button>
+</div>
 
   <div class="modal-handle" onclick="closeProfileModal()"></div>
 
@@ -891,6 +909,7 @@ svg {
       object-fit:cover;
       box-shadow:0 10px 25px rgba(0,0,0,0.2);
     ">
+    <input type="file" id="uploadPhoto" accept="image/*" style="margin-top:10px;">
     
     <h3 id="userName" style="margin-top:10px;"></h3>
   </div>
@@ -1014,6 +1033,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+const storage = firebase.storage();
 const auth = firebase.auth();
 const db = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
@@ -1060,6 +1080,150 @@ auth.onAuthStateChanged(user => {
     document.getElementById("userName").innerText = "Belum login";
   }
 });
+
+document.getElementById("uploadPhoto").addEventListener("change", uploadPhoto);
+
+function uploadPhoto(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  if(!currentUser){
+    alert("Harus login dulu");
+    return;
+  }
+
+  const ref = storage.ref("profile/" + currentUser.uid);
+
+  ref.put(file)
+    .then(snapshot => snapshot.ref.getDownloadURL())
+    .then(url => {
+
+      // simpan ke database
+      db.ref("users/" + currentUser.uid).update({
+        photoURL: url
+      });
+
+      // update UI langsung
+      document.getElementById("userPhoto").src = url;
+      document.getElementById("profilePhoto").src = url;
+
+      showToast("Foto profile berhasil diupdate 📸","success");
+
+    })
+    .catch(err=>{
+      console.error(err);
+      showToast("Upload gagal","error");
+    });
+}
+
+function loadUserProfile(uid){
+  db.ref("users/" + uid).on("value", snap=>{
+    const data = snap.val();
+
+    if(!data) return;
+
+    // custom name
+    if(data.customName){
+      document.getElementById("userName").innerText = data.customName;
+      document.getElementById("headerName").innerText = data.customName;
+    }
+
+    // 🔥 FOTO CUSTOM
+    if(data.photoURL){
+      document.getElementById("userPhoto").src = data.photoURL;
+      document.getElementById("profilePhoto").src = data.photoURL;
+    }
+  });
+}
+
+const reader = new FileReader();
+reader.onload = function(e){
+  document.getElementById("profilePhoto").src = e.target.result;
+}
+reader.readAsDataURL(file);
+
+let cropper;
+let selectedFile;
+
+document.getElementById("uploadPhoto").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  selectedFile = file;
+
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = document.getElementById("cropImage");
+    img.src = ev.target.result;
+
+    document.getElementById("cropModal").classList.add("active");
+    document.getElementById("backdrop").classList.add("active");
+
+    setTimeout(()=>{
+      cropper = new Cropper(img,{
+        aspectRatio:1, // 🔥 kotak (avatar)
+        viewMode:1,
+        autoCropArea:1,
+      });
+    },100);
+  };
+
+  reader.readAsDataURL(file);
+});
+
+function saveCropped(){
+  if(!cropper) return;
+
+  const canvas = cropper.getCroppedCanvas({
+    width:300,
+    height:300
+  });
+
+  // 🔥 compress (quality 0.7)
+  canvas.toBlob(blob => {
+
+    uploadToFirebase(blob);
+
+    cropper.destroy();
+    cropper = null;
+
+    closeCrop();
+
+  }, "image/jpeg", 0.7);
+}
+
+function uploadToFirebase(file){
+  if(!currentUser){
+    alert("Login dulu");
+    return;
+  }
+
+  const ref = storage.ref("profile/" + currentUser.uid);
+
+  ref.put(file)
+    .then(snap => snap.ref.getDownloadURL())
+    .then(url => {
+
+      db.ref("users/" + currentUser.uid).update({
+        photoURL: url
+      });
+
+      document.getElementById("userPhoto").src = url;
+      document.getElementById("profilePhoto").src = url;
+
+      showToast("Foto berhasil diupdate 🔥","success");
+    });
+}
+
+function closeCrop(){
+  document.getElementById("cropModal").classList.remove("active");
+  document.getElementById("backdrop").classList.remove("active");
+
+  if(cropper){
+    cropper.destroy();
+    cropper = null;
+  }
+}
 
 function loginGoogle(){
   auth.signInWithPopup(provider)
