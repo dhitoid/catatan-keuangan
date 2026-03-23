@@ -1136,11 +1136,6 @@ function loadUserProfile(uid){
   });
 }
 
-const reader = new FileReader();
-reader.onload = function(e){
-  document.getElementById("profilePhoto").src = e.target.result;
-}
-reader.readAsDataURL(file);
 
 let cropper;
 let selectedFile;
