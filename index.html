@@ -1140,43 +1140,80 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e){
 });
 
 function saveCropped(){
-  if(!cropper) return;
+  if(!cropper){
+    showToast("Cropper belum siap","error");
+    return;
+  }
+
+  if(!currentUser){
+    showToast("Harus login dulu","error");
+    return;
+  }
 
   const canvas = cropper.getCroppedCanvas({
     width:300,
     height:300
   });
 
-  // 🔥 compress (quality 0.7)
-  canvas.toBlob(blob => {
-  if(!blob){
-    showToast("Gagal proses gambar","error");
+  if(!canvas){
+    showToast("Gagal ambil canvas","error");
     return;
   }
 
-  uploadToFirebase(blob)
-    .then(() => {
+  // 🔥 fallback fix (anti toBlob error)
+  if(!canvas.toBlob){
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+    uploadToFirebase(dataURLtoBlob(dataUrl));
+    return;
+  }
+
+  canvas.toBlob(async (blob) => {
+
+    if(!blob){
+      showToast("Gagal convert gambar","error");
+      return;
+    }
+
+    try{
+      showToast("Uploading...","info");
+
+      const url = await uploadToFirebase(blob);
+
       showToast("Foto berhasil diupdate 🔥","success");
-    })
-    .catch(() => {
+
+    }catch(err){
+      console.error("UPLOAD ERROR:", err);
       showToast("Upload gagal","error");
-    })
-    .finally(() => {
+    }finally{
       if(cropper){
         cropper.destroy();
         cropper = null;
       }
       closeCrop();
-    });
+    }
 
-}, "image/jpeg", 0.7);
+  }, "image/jpeg", 0.7);
+}
+
+function dataURLtoBlob(dataurl){
+  let arr = dataurl.split(',');
+  let mime = arr[0].match(/:(.*?);/)[1];
+  let bstr = atob(arr[1]);
+  let n = bstr.length;
+  let u8arr = new Uint8Array(n);
+
+  while(n--){
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+
+  return new Blob([u8arr], {type:mime});
 }
 
 function uploadToFirebase(file){
   return new Promise((resolve, reject) => {
 
     if(!currentUser){
-      reject("Belum login");
+      reject("User belum login");
       return;
     }
 
@@ -1185,11 +1222,9 @@ function uploadToFirebase(file){
     ref.put(file)
       .then(snap => snap.ref.getDownloadURL())
       .then(url => {
-
         return db.ref("users/" + currentUser.uid).update({
           photoURL: url
         }).then(() => url);
-
       })
       .then(url => {
         document.getElementById("userPhoto").src = url;
@@ -1197,7 +1232,7 @@ function uploadToFirebase(file){
         resolve(url);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Firebase error:", err); // 🔥 penting
         reject(err);
       });
   });
