@@ -1142,8 +1142,12 @@ document.getElementById("uploadPhoto").addEventListener("change", function (e) {
 
 // Membuka modal untuk crop foto
 function openCropModal() {
+  // Pastikan modal crop dan backdrop terlihat
   document.getElementById("cropModal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
+
+  // Pastikan modal profil ditutup jika masih terbuka
+  document.getElementById("profileModal").classList.remove("active");
 }
 
 // Menutup modal crop setelah foto dipotong
