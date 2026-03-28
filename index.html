@@ -1677,44 +1677,35 @@ function getMonthlyUsage(){
 
 function checkMonthlyBudgetReset(){
   const now = new Date();
-
-  // FORMAT BULAN FIX (biar ga bug)
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  // AMBIL LANGSUNG DARI STORAGE (JANGAN PAKAI VARIABLE LAMA)
   let lastReset = localStorage.getItem("lastBudgetReset");
 
-  // FIRST TIME (BELUM PERNAH ADA DATA)
   if(!lastReset){
     localStorage.setItem("lastBudgetReset", currentMonth);
     return;
   }
 
-  // JIKA BULAN BERBEDA → RESET
   if(lastReset !== currentMonth){
 
-    budgets = {};
-    localStorage.setItem("budgets", JSON.stringify(budgets));
+    // RESET DATA
+    localStorage.setItem("budgets", JSON.stringify({}));
+    budgets = {}; // 🔥 update memory juga
 
-    // UPDATE BULAN TERAKHIR
     localStorage.setItem("lastBudgetReset", currentMonth);
 
     showToast("🔄 Budget bulan baru direset otomatis","info");
 
-    // 🔥 PENTING: REFRESH UI
-    if(typeof renderDashboardHome === "function"){
+    // 🔥 DELAY dikit biar DOM aman (ini penting)
+    setTimeout(()=>{
       renderDashboardHome();
-    }
-
-    // OPTIONAL: sync cloud kalau login
-    if(currentUser){
-      saveDataCloud(currentUser.uid);
-    }
+    }, 100);
   }
 }
 
 function renderBudgetUI(){
-
+  
+  let budgets = JSON.parse(localStorage.getItem("budgets")) || {};
   let usage = getMonthlyUsage();
 
   let html = `
@@ -3061,6 +3052,8 @@ function drawChart(canvasId){
 }
 
 function renderDashboardHome(){
+  
+  budgets = JSON.parse(localStorage.getItem("budgets")) || {};
 
   let totalMasuk = 0;
   let totalKeluar = 0;
