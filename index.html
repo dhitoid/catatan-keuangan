@@ -1063,9 +1063,16 @@ async function sendLoginEmail(user){
 
   const location = await getLocation();
 
+  const email = user?.email;
+
+  if(!email){
+    console.error("Email user kosong, skip kirim email");
+    return;
+  }
+
   emailjs.send("service_le0dcfc","template_t3p1u9s",{
     user_name: user.displayName || "User",
-    user_email: user.email,
+    user_email: email,
     login_time: new Date().toLocaleString("id-ID"),
     device: navigator.userAgent,
     location: location
