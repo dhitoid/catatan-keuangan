@@ -2334,10 +2334,22 @@ setTimeout(renderIcons, 50);
 }
 
 function resetData(){
-  if(confirm("Yakin mau reset semua data?")){
-    localStorage.clear();
-    showToast("Data berhasil direset","info");
-    setTimeout(()=>location.reload(),1000);
+  if(!confirm("Yakin mau reset semua data?")) return;
+
+  localStorage.clear();
+
+  data = [];
+  budgets = {};
+  saldoManual = 0;
+
+  localStorage.removeItem("lastBudgetReset");
+
+  renderDashboardHome();
+
+  showToast("🗑️ Semua data berhasil direset","info");
+
+  if(currentUser){
+    saveDataCloud(currentUser.uid);
   }
 }
 
