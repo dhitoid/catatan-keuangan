@@ -1105,6 +1105,7 @@ function loadUserProfile(uid){
 let cropper;
 let selectedFile;
 
+//  perubahan pada input file untuk foto profil
 // Mendengarkan perubahan pada input file untuk foto profil
 document.getElementById("uploadPhoto").addEventListener("change", function (e) {
   const file = e.target.files[0];
@@ -1167,6 +1168,7 @@ function closeCrop() {
 }
 
 // Menyimpan foto yang sudah dipotong dan langsung update di profil
+// Menyimpan foto yang sudah dipotong dan langsung update di profil
 function saveCropped() {
   if (!cropper) {
     showToast("Cropper belum siap", "error");
@@ -1205,6 +1207,7 @@ function saveCropped() {
 }
 
 // Mengupload gambar yang sudah dipotong ke Firebase
+// Mengupload gambar yang sudah dipotong ke Firebase
 function uploadToFirebase(file) {
   return new Promise((resolve, reject) => {
     const ref = storage.ref("profile/" + currentUser.uid); // Path di Firebase Storage
@@ -1232,12 +1235,13 @@ function uploadToFirebase(file) {
 }
 
 // Memperbarui foto profil di UI dan Firebase Database
+// Update Profile Image in the UI
 function updateUserProfile(url) {
-  // Memperbarui foto profil di UI
+  // Update the profile photo in the UI
   document.getElementById("userPhoto").src = url;
   document.getElementById("profilePhoto").src = url;
 
-  // Memperbarui foto profil di Firebase Database
+  // Update the photoURL in Firebase Database
   db.ref("users/" + currentUser.uid).update({
     photoURL: url
   });
@@ -1344,13 +1348,16 @@ function logout(){
   });
 }
 
-function openProfileModal(){
+// Open Profile Modal to update profile info
+function openProfileModal() {
   document.getElementById("profileModal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
 }
 
-function closeProfileModal(){
+// Close Profile Modal
+function closeProfileModal() {
   document.getElementById("profileModal").classList.remove("active");
+  document.getElementById("backdrop").classList.remove("active");
 }
 
 function openCalculator(){
