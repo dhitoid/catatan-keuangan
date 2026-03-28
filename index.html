@@ -9,7 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <title>MyFinance DT Pro</title>
 <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet"/>
 
@@ -1029,9 +1029,9 @@ async function exportToPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  let y = 15;
-
-  // 🔥 Hitung data
+  // =============================
+  // 🔥 HITUNG DATA
+  // =============================
   let totalMasuk = 0;
   let totalKeluar = 0;
 
@@ -1045,51 +1045,108 @@ async function exportToPDF(){
     saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
   });
 
-  // 🧾 TITLE
-  doc.setFontSize(18);
-  doc.text("Laporan Keuangan", 14, y);
+  // =============================
+  // 🎨 HEADER
+  // =============================
+  doc.setFillColor(15, 94, 168); // biru
+  doc.rect(0, 0, 210, 30, "F");
 
-  y += 10;
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.text("LAPORAN KEUANGAN", 14, 18);
 
   doc.setFontSize(10);
-  doc.text("Tanggal: " + new Date().toLocaleString("id-ID"), 14, y);
+  doc.text(new Date().toLocaleString("id-ID"), 14, 25);
 
-  y += 10;
+  // =============================
+  // 💰 SUMMARY BOX
+  // =============================
+  let startY = 40;
 
-  // 💰 SUMMARY
-  doc.setFontSize(12);
-  doc.text(`Saldo: Rp ${saldo.toLocaleString("id-ID")}`, 14, y);
-  y += 6;
-  doc.text(`Total Masuk: Rp ${totalMasuk.toLocaleString("id-ID")}`, 14, y);
-  y += 6;
-  doc.text(`Total Keluar: Rp ${totalKeluar.toLocaleString("id-ID")}`, 14, y);
+  const drawBox = (x, y, title, value, color)=>{
+    doc.setFillColor(245,247,250);
+    doc.roundedRect(x, y, 55, 25, 4, 4, "F");
 
-  y += 10;
+    doc.setTextColor(100);
+    doc.setFontSize(9);
+    doc.text(title, x+4, y+8);
 
-  // 📊 HEADER TABLE
-  doc.setFontSize(11);
-  doc.text("Transaksi:", 14, y);
+    doc.setTextColor(...color);
+    doc.setFontSize(12);
+    doc.text("Rp " + value.toLocaleString("id-ID"), x+4, y+18);
+  };
 
-  y += 8;
+  drawBox(14, startY, "Saldo", saldo, [0,0,0]);
+  drawBox(75, startY, "Pemasukan", totalMasuk, [22,163,74]);   // hijau
+  drawBox(136, startY, "Pengeluaran", totalKeluar, [220,38,38]); // merah
 
-  doc.setFontSize(9);
+  // =============================
+  // 📊 TABLE DATA
+  // =============================
+  const tableData = data.map((d,i)=>[
+    i+1,
+    d.ket,
+    d.kategori,
+    d.tipe === "masuk" ? "Masuk" : "Keluar",
+    (d.tipe==="masuk"?"+":"-") + " Rp " + d.nominal.toLocaleString("id-ID")
+  ]);
 
-  // 🔥 LOOP DATA
-  data.forEach((d, i)=>{
+  doc.autoTable({
+    startY: startY + 35,
+    head: [["No","Deskripsi","Kategori","Tipe","Nominal"]],
+    body: tableData,
 
-    if(y > 270){
-      doc.addPage();
-      y = 15;
+    styles:{
+      fontSize:9,
+      cellPadding:4,
+      valign:'middle'
+    },
+
+    headStyles:{
+      fillColor:[15,94,168],
+      textColor:[255,255,255],
+      fontStyle:'bold'
+    },
+
+    alternateRowStyles:{
+      fillColor:[245,247,250]
+    },
+
+    didParseCell: function(dataCell){
+      // warna kolom nominal
+      if(dataCell.column.index === 4){
+        const text = dataCell.cell.text[0];
+        if(text.includes("+")){
+          dataCell.cell.styles.textColor = [22,163,74];
+        } else {
+          dataCell.cell.styles.textColor = [220,38,38];
+        }
+      }
     }
-
-    let text = `${i+1}. ${d.ket} | ${d.kategori} | ${d.tipe === "masuk" ? "+" : "-"} Rp ${d.nominal.toLocaleString("id-ID")}`;
-
-    doc.text(text, 14, y);
-    y += 6;
   });
 
+  // =============================
+  // 🧾 FOOTER
+  // =============================
+  const pageCount = doc.internal.getNumberOfPages();
+
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(150);
+
+    doc.text(
+      `Halaman ${i} dari ${pageCount}`,
+      105,
+      290,
+      { align:"center" }
+    );
+  }
+
+  // =============================
   // 📥 DOWNLOAD
-  doc.save("laporan-keuangan.pdf");
+  // =============================
+  doc.save("Laporan-Keuangan-DT.pdf");
 }
 
 const firebaseConfig = {
