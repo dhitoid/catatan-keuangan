@@ -11,6 +11,7 @@
 <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <title>MyFinance DT Pro</title>
 <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet"/>
 
@@ -1029,6 +1030,19 @@ let selectedBudgetKategori = null;
 let calcInput = "";
 let calcHistory = [];
 
+const deviceInfo = navigator.userAgent;
+
+async function getLocation(){
+  try{
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+
+    return `${data.city}, ${data.country_name}`;
+  }catch{
+    return "Tidak diketahui";
+  }
+}
+
 const getLast3MonthsData = () => {
   const now = new Date();
 
@@ -1040,6 +1054,30 @@ const getLast3MonthsData = () => {
     return t >= threeMonthsAgo && t <= now;
   });
 };
+
+(function(){
+  emailjs.init("mBuUki93QCCb4JQMk");
+})();
+
+async function sendLoginEmail(user){
+
+  const location = await getLocation();
+
+  emailjs.send("service_le0dcfc","template_t3p1u9s",{
+    user_name: user.displayName || "User",
+    user_email: user.email,
+    login_time: new Date().toLocaleString("id-ID"),
+    device: navigator.userAgent,
+    location: location
+  })
+  .then(()=>{
+    console.log("Email banking terkirim");
+  })
+  .catch(err=>{
+    console.error("Email gagal:", err);
+  });
+
+}
 
 async function export3BulanPDF(){
 
@@ -1562,12 +1600,16 @@ function dataURLtoBlob(dataurl) {
 
 function loginGoogle(){
   auth.signInWithPopup(provider)
-    .then(result => {
+    .then(async result => {
+
       currentUser = result.user;
 
       updateUserUI(result.user);
       loadUserProfile(result.user.uid);
       loadDataCloud(result.user.uid);
+
+      // 🔥 EMAIL BANKING
+      await sendLoginEmail(result.user);
 
       document.getElementById("loginBtn").style.display = "none";
       document.getElementById("profileBtn").style.display = "block";
