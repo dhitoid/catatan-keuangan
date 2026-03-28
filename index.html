@@ -1066,12 +1066,16 @@ auth.onAuthStateChanged(user => {
     document.getElementById("loginBtn").style.display = "none";
     document.getElementById("profileBtn").style.display = "block";
 
+    checkMonthlyBudgetReset();
     updateUserUI(user);
     loadUserProfile(user.uid);
     loadDataCloud(user.uid);
 
   } else {
     currentUser = null;
+    
+    checkMonthlyBudgetReset();
+    
     document.getElementById("headerName").innerText = "Guest";
     document.getElementById("loginBtn").style.display = "block";
     document.getElementById("profileBtn").style.display = "none";
@@ -1673,19 +1677,39 @@ function getMonthlyUsage(){
 
 function checkMonthlyBudgetReset(){
   const now = new Date();
-  const currentMonth = now.getFullYear() + "-" + (now.getMonth()+1);
 
-  if(lastBudgetReset !== currentMonth){
+  // FORMAT BULAN FIX (biar ga bug)
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-    // RESET SEMUA BUDGET
+  // AMBIL LANGSUNG DARI STORAGE (JANGAN PAKAI VARIABLE LAMA)
+  let lastReset = localStorage.getItem("lastBudgetReset");
+
+  // FIRST TIME (BELUM PERNAH ADA DATA)
+  if(!lastReset){
+    localStorage.setItem("lastBudgetReset", currentMonth);
+    return;
+  }
+
+  // JIKA BULAN BERBEDA → RESET
+  if(lastReset !== currentMonth){
+
     budgets = {};
     localStorage.setItem("budgets", JSON.stringify(budgets));
 
-    // UPDATE LAST RESET
-    lastBudgetReset = currentMonth;
+    // UPDATE BULAN TERAKHIR
     localStorage.setItem("lastBudgetReset", currentMonth);
 
     showToast("🔄 Budget bulan baru direset otomatis","info");
+
+    // 🔥 PENTING: REFRESH UI
+    if(typeof renderDashboardHome === "function"){
+      renderDashboardHome();
+    }
+
+    // OPTIONAL: sync cloud kalau login
+    if(currentUser){
+      saveDataCloud(currentUser.uid);
+    }
   }
 }
 
@@ -1816,6 +1840,11 @@ function resetBudgetManual(){
 
   budgets = {};
   localStorage.setItem("budgets", JSON.stringify(budgets));
+
+  // 🔥 RESET BULAN JUGA (biar ga ke-trigger lagi)
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  localStorage.setItem("lastBudgetReset", currentMonth);
 
   showToast("🗑️ Budget berhasil direset","info");
 
