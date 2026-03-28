@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <title>MyFinance DT Pro</title>
 <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet"/>
 
@@ -1022,6 +1023,74 @@ let selectedYear = null;
 let selectedBudgetKategori = null;
 let calcInput = "";
 let calcHistory = [];
+
+async function exportToPDF(){
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  let y = 15;
+
+  // 🔥 Hitung data
+  let totalMasuk = 0;
+  let totalKeluar = 0;
+
+  data.forEach(d=>{
+    if(d.tipe === "masuk") totalMasuk += d.nominal;
+    else totalKeluar += d.nominal;
+  });
+
+  let saldo = saldoManual;
+  data.forEach(d=>{
+    saldo += d.tipe==="masuk"?d.nominal:-d.nominal;
+  });
+
+  // 🧾 TITLE
+  doc.setFontSize(18);
+  doc.text("Laporan Keuangan", 14, y);
+
+  y += 10;
+
+  doc.setFontSize(10);
+  doc.text("Tanggal: " + new Date().toLocaleString("id-ID"), 14, y);
+
+  y += 10;
+
+  // 💰 SUMMARY
+  doc.setFontSize(12);
+  doc.text(`Saldo: Rp ${saldo.toLocaleString("id-ID")}`, 14, y);
+  y += 6;
+  doc.text(`Total Masuk: Rp ${totalMasuk.toLocaleString("id-ID")}`, 14, y);
+  y += 6;
+  doc.text(`Total Keluar: Rp ${totalKeluar.toLocaleString("id-ID")}`, 14, y);
+
+  y += 10;
+
+  // 📊 HEADER TABLE
+  doc.setFontSize(11);
+  doc.text("Transaksi:", 14, y);
+
+  y += 8;
+
+  doc.setFontSize(9);
+
+  // 🔥 LOOP DATA
+  data.forEach((d, i)=>{
+
+    if(y > 270){
+      doc.addPage();
+      y = 15;
+    }
+
+    let text = `${i+1}. ${d.ket} | ${d.kategori} | ${d.tipe === "masuk" ? "+" : "-"} Rp ${d.nominal.toLocaleString("id-ID")}`;
+
+    doc.text(text, 14, y);
+    y += 6;
+  });
+
+  // 📥 DOWNLOAD
+  doc.save("laporan-keuangan.pdf");
+}
 
 const firebaseConfig = {
   apiKey: "AIzaSyCHPhlOsa6Qkk_AWSGA88jfgj0K0XCt6e4",
@@ -2334,7 +2403,24 @@ setTimeout(renderIcons, 50);
 }
 
 function resetData(){
-  if(!confirm("Yakin mau reset semua data?")) return;
+
+  const confirmReset = confirm("Sebelum reset, mau export data ke PDF dulu?");
+
+  if(confirmReset){
+    exportToPDF();
+
+    setTimeout(()=>{
+      lanjutReset();
+    }, 500);
+
+  } else {
+    if(confirm("Yakin mau langsung reset tanpa export?")){
+      lanjutReset();
+    }
+  }
+}
+
+function lanjutReset(){
 
   localStorage.clear();
 
