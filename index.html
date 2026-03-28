@@ -1105,13 +1105,14 @@ function loadUserProfile(uid){
 let cropper;
 let selectedFile;
 
-document.getElementById("uploadPhoto").addEventListener("change", function(e) {
+// Mendengarkan perubahan pada input file untuk foto profil
+document.getElementById("uploadPhoto").addEventListener("change", function (e) {
   const file = e.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
 
-  reader.onload = function(ev) {
+  reader.onload = function (ev) {
     const img = document.getElementById("cropImage");
 
     // Reset cropper jika sudah ada
@@ -1120,17 +1121,17 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e) {
       cropper = null;
     }
 
-    img.src = ev.target.result; // set source image untuk cropper
+    img.src = ev.target.result; // Menyusun gambar ke dalam cropper
 
     img.onload = () => {
       setTimeout(() => {
         cropper = new Cropper(img, {
-          aspectRatio: 1, // Set rasio crop 1:1 untuk gambar profil
+          aspectRatio: 1, // Set rasio crop 1:1 untuk foto profil
           viewMode: 1,
           autoCropArea: 1, // Otomatis crop area
         });
 
-        // Langsung buka modal crop tanpa menunggu klik
+        // Langsung buka crop modal tanpa menunggu klik
         openCropModal();
       }, 50);
     };
@@ -1139,29 +1140,29 @@ document.getElementById("uploadPhoto").addEventListener("change", function(e) {
   reader.readAsDataURL(file); // Membaca file gambar
 });
 
-// Fungsi untuk membuka modal crop
+// Membuka modal untuk crop foto
 function openCropModal() {
   document.getElementById("cropModal").classList.add("active");
   document.getElementById("backdrop").classList.add("active");
 }
 
-// Fungsi untuk menutup modal crop
+// Menutup modal crop setelah foto dipotong
 function closeCrop() {
   document.getElementById("cropModal").classList.remove("active");
 
-  // Hapus backdrop hanya jika modal profile tidak terbuka
+  // Hapus backdrop hanya jika profile modal tidak terbuka
   if (!document.getElementById("profileModal").classList.contains("active")) {
     document.getElementById("backdrop").classList.remove("active");
   }
 
-  // Hancurkan cropper jika ada
+  // Hancurkan cropper untuk membersihkan setelah selesai
   if (cropper) {
     cropper.destroy();
     cropper = null;
   }
 }
 
-// Fungsi untuk menyimpan foto setelah dipotong dan langsung update di UI
+// Menyimpan foto yang sudah dipotong dan langsung update di profil
 function saveCropped() {
   if (!cropper) {
     showToast("Cropper belum siap", "error");
@@ -1173,6 +1174,7 @@ function saveCropped() {
     return;
   }
 
+  // Mengambil hasil gambar yang telah dipotong
   const canvas = cropper.getCroppedCanvas({
     width: 300,
     height: 300
@@ -1185,26 +1187,27 @@ function saveCropped() {
     }
 
     try {
-      const photoUrl = await uploadToFirebase(blob); // Upload gambar ke Firebase dan ambil URL
-      updateUserProfile(photoUrl); // Update foto profil secara otomatis di website
+      // Mengupload foto ke Firebase dan mendapat URL
+      const photoUrl = await uploadToFirebase(blob);
+      updateUserProfile(photoUrl); // Update foto profil langsung di UI
       showToast("Foto berhasil diupdate 🔥", "success");
     } catch (err) {
       console.error(err);
       showToast("Upload gagal", "error");
     } finally {
-      closeCrop(); // Menutup crop modal setelah selesai
+      closeCrop(); // Menutup crop modal setelah upload selesai
     }
-  }, "image/jpeg", 0.7); // Menyimpan gambar dalam format JPEG dengan kualitas 0.7
+  }, "image/jpeg", 0.7); // Menyimpan gambar dengan kualitas 0.7 dalam format JPEG
 }
 
-// Fungsi untuk meng-upload gambar ke Firebase
+// Mengupload gambar yang sudah dipotong ke Firebase
 function uploadToFirebase(file) {
   return new Promise((resolve, reject) => {
     const ref = storage.ref("profile/" + currentUser.uid); // Path di Firebase Storage
 
-    const task = ref.put(file); // Meng-upload file
+    const task = ref.put(file); // Mengupload file ke Firebase Storage
 
-    const toast = createProgressToast(); // Menampilkan toast progress
+    const toast = createProgressToast(); // Menampilkan toast progress upload
 
     task.on("state_changed",
       (snap) => {
@@ -1217,26 +1220,26 @@ function uploadToFirebase(file) {
         reject(err);
       },
       async () => {
-        const url = await task.snapshot.ref.getDownloadURL(); // Mengambil URL file setelah upload selesai
+        const url = await task.snapshot.ref.getDownloadURL(); // Mendapatkan URL file yang telah diupload
         resolve(url);
       }
     );
   });
 }
 
-// Fungsi untuk memperbarui foto profil di UI dan Firebase Database
+// Memperbarui foto profil di UI dan Firebase Database
 function updateUserProfile(url) {
-  // Update foto profil di UI
+  // Memperbarui foto profil di UI
   document.getElementById("userPhoto").src = url;
   document.getElementById("profilePhoto").src = url;
 
-  // Update foto profil di Firebase Database
+  // Memperbarui foto profil di Firebase Database
   db.ref("users/" + currentUser.uid).update({
     photoURL: url
   });
 }
 
-// Fungsi untuk membuat toast progress upload
+// Membuat toast untuk progress upload
 function createProgressToast() {
   const container = document.getElementById("toast-container");
 
@@ -1249,7 +1252,7 @@ function createProgressToast() {
   return toast;
 }
 
-// Fungsi untuk memperbarui progress toast
+// Memperbarui progress toast selama upload
 function updateProgressToast(toast, percent, isError = false, done = false) {
   if (isError) {
     toast.className = "toast error";
@@ -1268,23 +1271,24 @@ function updateProgressToast(toast, percent, isError = false, done = false) {
   toast.innerText = "Upload " + Math.floor(percent) + "%";
 }
 
-// Event listener untuk membuka file input saat foto profile diklik
+// Event listener untuk membuka file input saat foto profil diklik
 document.getElementById("profilePhoto").onclick = () => {
   document.getElementById("uploadPhoto").click();
 };
 
-function dataURLtoBlob(dataurl){
+// Mengubah data URL gambar menjadi Blob
+function dataURLtoBlob(dataurl) {
   let arr = dataurl.split(',');
   let mime = arr[0].match(/:(.*?);/)[1];
   let bstr = atob(arr[1]);
   let n = bstr.length;
   let u8arr = new Uint8Array(n);
 
-  while(n--){
+  while (n--) {
     u8arr[n] = bstr.charCodeAt(n);
   }
 
-  return new Blob([u8arr], {type:mime});
+  return new Blob([u8arr], { type: mime });
 }
 
 function loginGoogle(){
