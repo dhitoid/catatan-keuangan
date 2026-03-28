@@ -975,6 +975,10 @@ svg {
     <div class="icon"><i data-feather="file-text"></i></div>
     Mutasi
   </div>
+  <div class="menu-item" onclick="export3BulanPDF()">
+    <div class="icon"><i data-feather="file-text"></i></div>
+    Cetak 3 Bulan
+  </div>
   <div class="menu-item" onclick="resetData()">
     <div class="icon"><i data-feather="refresh-ccw"></i></div>
     Reset
@@ -1024,6 +1028,132 @@ let selectedYear = null;
 let selectedBudgetKategori = null;
 let calcInput = "";
 let calcHistory = [];
+
+const getLast3MonthsData = () => {
+  const now = new Date();
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(now.getMonth() - 3);
+
+  return data.filter(d => {
+    const t = new Date(d.time); // ISO aman di sini
+    return t >= threeMonthsAgo && t <= now;
+  });
+};
+
+async function export3BulanPDF(){
+
+  if(!data || data.length === 0){
+    alert("Tidak ada data!");
+    return;
+  }
+
+  const filtered = getLast3MonthsData();
+
+  if(filtered.length === 0){
+    alert("Tidak ada transaksi 3 bulan terakhir!");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // =============================
+  // 🔥 SORT DATA
+  // =============================
+  const sorted = filtered.sort((a,b)=> new Date(a.time) - new Date(b.time));
+
+  // =============================
+  // 💰 HITUNG SALDO
+  // =============================
+  let saldo = saldoManual || 0;
+
+  let rows = [];
+  let totalDebit = 0;
+  let totalKredit = 0;
+
+  sorted.forEach(d=>{
+
+    if(d.tipe === "masuk"){
+      saldo += d.nominal;
+      totalKredit += d.nominal;
+    }else{
+      saldo -= d.nominal;
+      totalDebit += d.nominal;
+    }
+
+    rows.push([
+      new Date(d.time).toLocaleString("id-ID"),
+      d.ket,
+      d.kategori,
+      d.tipe === "keluar" ? "Rp " + d.nominal.toLocaleString("id-ID") : "-",
+      d.tipe === "masuk" ? "Rp " + d.nominal.toLocaleString("id-ID") : "-",
+      "Rp " + saldo.toLocaleString("id-ID")
+    ]);
+  });
+
+  // =============================
+  // 🏦 HEADER
+  // =============================
+  doc.setFontSize(14);
+  doc.text("REKENING KORAN - 3 BULAN TERAKHIR", 14, 15);
+
+  doc.setFontSize(10);
+  doc.text("Tanggal Cetak: " + new Date().toLocaleString("id-ID"), 14, 22);
+
+  // =============================
+  // 📊 SUMMARY
+  // =============================
+  doc.text(`Total Debit : Rp ${totalDebit.toLocaleString("id-ID")}`, 14, 30);
+  doc.text(`Total Kredit: Rp ${totalKredit.toLocaleString("id-ID")}`, 14, 35);
+
+  // =============================
+  // 📋 TABLE
+  // =============================
+  doc.autoTable({
+    startY: 40,
+    head: [["Tanggal","Deskripsi","Kategori","Debit","Kredit","Saldo"]],
+    body: rows,
+
+    styles:{ fontSize:9 },
+
+    headStyles:{
+      fillColor:[0,0,0],
+      textColor:[255,255,255]
+    },
+
+    columnStyles:{
+      3:{halign:"right"},
+      4:{halign:"right"},
+      5:{halign:"right"}
+    },
+
+    didParseCell: function(cell){
+      if(cell.column.index === 3 && cell.cell.text[0] !== "-"){
+        cell.cell.styles.textColor = [220,38,38];
+      }
+      if(cell.column.index === 4 && cell.cell.text[0] !== "-"){
+        cell.cell.styles.textColor = [22,163,74];
+      }
+    }
+  });
+
+  // =============================
+  // 📄 FOOTER
+  // =============================
+  const pageCount = doc.internal.getNumberOfPages();
+
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.text(`Halaman ${i}/${pageCount}`, 105, 290, { align:"center" });
+  }
+
+  // =============================
+  // 📥 DOWNLOAD
+  // =============================
+  doc.save("Rekening-Koran-3-Bulan.pdf");
+}
 
 async function exportToPDF(){
 
