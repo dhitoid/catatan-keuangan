@@ -876,145 +876,518 @@ svg {
   font-size:12px;
 }
 
-/* ========================= */
-/* PWA INSTALL UI PREMIUM */
-/* ========================= */
+/* =========================
 
-.pwa-install{
+INSTALL CARD
+
+========================= */
+
+.install-card{
+
   position:fixed;
-  left:16px;
-  right:16px;
-  bottom:-200px;
-  z-index:99999;
 
-  background:rgba(15,23,42,0.88);
+  left:50%;
+
+  bottom:25px;
+
+  transform:translateX(-50%);
+
+  width:92%;
+
+  max-width:420px;
+
+  background:rgba(10,15,30,.88);
+
   backdrop-filter:blur(25px);
 
-  border:1px solid rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,.08);
 
-  border-radius:28px;
+  border-radius:32px;
 
-  padding:18px;
+  padding:22px;
 
-  display:flex;
-  align-items:center;
-  gap:14px;
+  z-index:99999;
+
+  overflow:hidden;
 
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.08);
 
-  transition:all .45s cubic-bezier(.22,.61,.36,1);
+  0 20px 60px rgba(0,0,0,.45),
 
-  overflow:hidden;
+  inset 0 1px 0 rgba(255,255,255,.06);
+
+  animation:
+
+  installFloat .8s cubic-bezier(.2,.9,.2,1);
+
 }
 
-.pwa-install.show{
-  bottom:20px;
-}
+/* =========================
 
-.pwa-install::before{
-  content:"";
+GLOW
+
+========================= */
+
+.install-glow{
+
   position:absolute;
-  inset:0;
+
+  inset:-100px;
 
   background:
-    linear-gradient(
-      120deg,
-      transparent 20%,
-      rgba(255,255,255,0.08) 40%,
-      transparent 60%
-    );
 
-  transform:translateX(-100%);
-  animation:shimmer 3s infinite;
+  radial-gradient(circle at top,
+
+  rgba(0,255,170,.18),
+
+  transparent 60%);
+
+  animation:pulseGlow 4s infinite;
+
 }
 
-@keyframes shimmer{
-  100%{
-    transform:translateX(200%);
-  }
-}
+/* =========================
 
-.pwa-icon{
-  width:58px;
-  height:58px;
-  border-radius:18px;
-  overflow:hidden;
-  flex-shrink:0;
+TOP
 
-  box-shadow:0 8px 20px rgba(0,0,0,0.35);
-}
+========================= */
 
-.pwa-icon img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+.install-top{
 
-.pwa-content{
-  flex:1;
-  color:white;
-}
-
-.pwa-title{
-  font-size:15px;
-  font-weight:700;
-}
-
-.pwa-sub{
-  font-size:12px;
-  opacity:.7;
-  margin-top:3px;
-}
-
-.pwa-actions{
   display:flex;
-  gap:10px;
-  margin-top:10px;
+
+  align-items:center;
+
+  gap:14px;
+
+  position:relative;
+
+  z-index:2;
+
 }
 
-.pwa-btn{
-  border:none;
-  border-radius:14px;
-  padding:10px 14px;
+.install-logo-wrap{
+
+  width:64px;
+
+  height:64px;
+
+  border-radius:20px;
+
+  background:linear-gradient(
+
+  135deg,
+
+  #00ffae,
+
+  #0066ff);
+
+  padding:3px;
+
+  animation:floatLogo 3s infinite ease-in-out;
+
+}
+
+.install-logo{
+
+  width:100%;
+
+  height:100%;
+
+  object-fit:cover;
+
+  border-radius:17px;
+
+  background:#0b1020;
+
+}
+
+.install-info h3{
+
+  font-size:20px;
+
+  margin-bottom:4px;
+
+  color:white;
+
+}
+
+.install-info p{
 
   font-size:13px;
-  font-weight:600;
+
+  line-height:1.5;
+
+  color:rgba(255,255,255,.7);
+
+}
+
+.install-close{
+
+  margin-left:auto;
+
+  width:34px;
+
+  height:34px;
+
+  border:none;
+
+  border-radius:50%;
+
+  background:rgba(255,255,255,.08);
+
+  color:white;
 
   cursor:pointer;
+
 }
 
-.pwa-btn.install{
-  background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
+/* =========================
+
+PHONE MOCKUP
+
+========================= */
+
+.install-preview{
+
+  margin-top:22px;
+
+  display:flex;
+
+  justify-content:center;
+
+}
+
+.phone-frame{
+
+  width:190px;
+
+  height:360px;
+
+  border-radius:38px;
+
+  padding:14px;
+
+  position:relative;
+
+  background:
+
+  linear-gradient(
+
+  180deg,
+
+  #1d2338,
+
+  #0b1020);
+
+  border:2px solid rgba(255,255,255,.08);
+
+  overflow:hidden;
+
+  box-shadow:
+
+  inset 0 2px 8px rgba(255,255,255,.05),
+
+  0 10px 30px rgba(0,0,0,.4);
+
+  animation:phoneFloat 5s infinite ease-in-out;
+
+}
+
+.phone-island{
+
+  position:absolute;
+
+  top:10px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:80px;
+
+  height:22px;
+
+  border-radius:50px;
+
+  background:#000;
+
+}
+
+.screen-content{
+
+  margin-top:40px;
+
+}
+
+.balance-card{
+
+  background:
+
+  linear-gradient(
+
+  135deg,
+
+  #00ffae,
+
+  #0066ff);
+
+  border-radius:24px;
+
+  padding:22px;
+
   color:white;
+
+  box-shadow:
+
+  0 10px 25px rgba(0,255,174,.25);
+
+  animation:cardPulse 3s infinite;
+
 }
 
-.pwa-btn.later{
-  background:rgba(255,255,255,0.08);
+.balance-card span{
+
+  font-size:13px;
+
+  opacity:.8;
+
+}
+
+.balance-card h2{
+
+  margin-top:8px;
+
+  font-size:24px;
+
+}
+
+.mini-stats{
+
+  margin-top:18px;
+
+  display:grid;
+
+  gap:12px;
+
+}
+
+.mini-box{
+
+  height:58px;
+
+  border-radius:18px;
+
+  background:
+
+  rgba(255,255,255,.06);
+
+  border:
+
+  1px solid rgba(255,255,255,.05);
+
+  animation:shine 2.5s infinite;
+
+}
+
+/* =========================
+
+BUTTON
+
+========================= */
+
+.install-btn{
+
+  width:100%;
+
+  margin-top:24px;
+
+  border:none;
+
+  border-radius:20px;
+
+  height:60px;
+
+  font-size:17px;
+
+  font-weight:700;
+
   color:white;
+
+  background:
+
+  linear-gradient(
+
+  135deg,
+
+  #00ffae,
+
+  #0066ff);
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:10px;
+
+  cursor:pointer;
+
+  transition:.3s;
+
+  box-shadow:
+
+  0 10px 25px rgba(0,255,174,.25);
+
 }
 
-.pwa-install.hide{
-  opacity:0;
-  transform:translateY(40px);
+.install-btn:active{
+
+  transform:scale(.97);
+
 }
 
-.install-loading{
-  width:18px;
-  height:18px;
-  border:2px solid rgba(255,255,255,0.3);
-  border-top-color:white;
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-  margin:auto;
-}
+/* =========================
 
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
+ANIMATION
+
+========================= */
+
+@keyframes installFloat{
+
+  from{
+
+    opacity:0;
+
+    transform:
+
+    translateX(-50%)
+
+    translateY(100px)
+
+    scale(.9);
+
   }
+
+  to{
+
+    opacity:1;
+
+    transform:
+
+    translateX(-50%)
+
+    translateY(0)
+
+    scale(1);
+
+  }
+
 }
+
+@keyframes pulseGlow{
+
+  0%,100%{
+
+    transform:scale(1);
+
+    opacity:.5;
+
+  }
+
+  50%{
+
+    transform:scale(1.2);
+
+    opacity:1;
+
+  }
+
+}
+
+@keyframes floatLogo{
+
+  0%,100%{
+
+    transform:translateY(0);
+
+  }
+
+  50%{
+
+    transform:translateY(-6px);
+
+  }
+
+}
+
+@keyframes phoneFloat{
+
+  0%,100%{
+
+    transform:
+
+    rotate(-2deg)
+
+    translateY(0);
+
+  }
+
+  50%{
+
+    transform:
+
+    rotate(2deg)
+
+    translateY(-8px);
+
+  }
+
+}
+
+@keyframes cardPulse{
+
+  0%,100%{
+
+    transform:scale(1);
+
+  }
+
+  50%{
+
+    transform:scale(1.03);
+
+  }
+
+}
+
+@keyframes shine{
+
+  0%{
+
+    opacity:.4;
+
+  }
+
+  50%{
+
+    opacity:1;
+
+  }
+
+  100%{
+
+    opacity:.4;
+
+  }
+
+}
+
+.hidden{
+
+  display:none;
+  }
 </style>
 </head>
 
@@ -1159,6 +1532,100 @@ svg {
 
 <div class="footer">
   © 2026 MyFinance DT Pro • Secure Banking UI
+</div>
+
+<!-- =========================
+
+PWA INSTALL BANKING STYLE
+
+========================= -->
+
+<div id="installCard" class="install-card hidden">
+
+  
+
+  <div class="install-glow"></div>
+
+  <div class="install-top">
+
+    
+
+    <div class="install-logo-wrap">
+
+      <img src="icon-192.png" class="install-logo">
+
+    </div>
+
+    <div class="install-info">
+
+      <h3>My Finance</h3>
+
+      <p>Install aplikasi untuk pengalaman lebih cepat & premium</p>
+
+    </div>
+
+    <button id="closeInstall" class="install-close">
+
+      ✕
+
+    </button>
+
+  </div>
+
+  <div class="install-preview">
+
+    
+
+    <div class="phone-frame">
+
+      
+
+      <div class="phone-island"></div>
+
+      <div class="screen-content">
+
+        <div class="balance-card">
+
+          <span>Total Balance</span>
+
+          <h2>Rp 12.480.000</h2>
+
+        </div>
+
+        <div class="mini-stats">
+
+          <div class="mini-box"></div>
+
+          <div class="mini-box"></div>
+
+          <div class="mini-box"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <button id="installBtn" class="install-btn">
+
+    
+
+    <span>Install App</span>
+
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+
+      <path d="M12 16L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+
+      <path d="M7 11L12 16L17 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+
+      <path d="M5 20H19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+
+    </svg>
+
+  </button>
+
 </div>
 
 <script>
@@ -3793,119 +4260,158 @@ renderIcons();
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+
+  deferredPrompt = e;
+
+  // bikin tombol install custom
+  const btn = document.createElement("button");
+
+  btn.innerText = "Install App";
+  btn.style.position = "fixed";
+  btn.style.bottom = "100px";
+  btn.style.left = "20px";
+  btn.style.right = "20px";
+  btn.style.zIndex = "99999";
+
+  document.body.appendChild(btn);
+
+  btn.addEventListener("click", async () => {
+    deferredPrompt.prompt();
+
+    const choice = await deferredPrompt.userChoice;
+
+    if(choice.outcome === "accepted"){
+      console.log("User install app");
+    }
+
+    deferredPrompt = null;
+    btn.remove();
+  });
+});
+
+const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+if (isIos && !window.navigator.standalone) {
+  setTimeout(() => {
+    alert("Install aplikasi:\nTap Share → Add to Home Screen");
+  }, 3000);
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then(() => {
+        console.log("PWA aktif 🔥");
+      })
+      .catch(err => {
+        console.log("SW gagal:", err);
+      });
+  });
+}
+
+/* =========================
+
+PWA INSTALL SYSTEM
+
+========================= */
+
+let deferredPrompt;
+
+const installCard =
+
+document.getElementById("installCard");
+
+const installBtn =
+
+document.getElementById("installBtn");
+
+const closeInstall =
+
+document.getElementById("closeInstall");
+
+/* =========================
+
+SHOW INSTALL PROMPT
+
+========================= */
+
+window.addEventListener(
+
+'beforeinstallprompt',
+
+(e)=>{
 
   e.preventDefault();
 
   deferredPrompt = e;
 
-  showInstallBanner();
+  setTimeout(()=>{
+
+    installCard.classList.remove('hidden');
+
+  },2500);
+
 });
 
-function showInstallBanner(){
+/* =========================
 
-  // prevent duplicate
-  if(document.querySelector(".pwa-install")) return;
+INSTALL CLICK
 
-  const banner = document.createElement("div");
+========================= */
 
-  banner.className = "pwa-install";
+installBtn.addEventListener(
 
-  banner.innerHTML = `
-  
-  <div class="pwa-icon">
-    <img src="icons/icon-192.png">
-  </div>
+'click',
 
-  <div class="pwa-content">
-    
-    <div class="pwa-title">
-      Install MyFinance DT
-    </div>
+async()=>{
 
-    <div class="pwa-sub">
-      Akses cepat seperti mobile banking app
-    </div>
+  if(!deferredPrompt) return;
 
-    <div class="pwa-actions">
-      <button class="pwa-btn install" id="installPwaBtn">
-        Install
-      </button>
+  deferredPrompt.prompt();
 
-      <button class="pwa-btn later" id="laterBtn">
-        Nanti
-      </button>
-    </div>
+  const {
 
-  </div>
-  `;
+    outcome
 
-  document.body.appendChild(banner);
+  } = await deferredPrompt.userChoice;
 
-  setTimeout(()=>{
-    banner.classList.add("show");
-  },100);
+  if(outcome === 'accepted'){
 
-  // haptic
-  if(navigator.vibrate){
-    navigator.vibrate(40);
+    installBtn.innerHTML =
+
+    "Installed ✓";
+
+    installBtn.style.opacity = ".8";
+
+    setTimeout(()=>{
+
+      installCard.style.display="none";
+
+    },1200);
+
   }
 
-  // install
-  document
-    .getElementById("installPwaBtn")
-    .onclick = async () => {
+  deferredPrompt = null;
 
-      const btn = document.getElementById("installPwaBtn");
+});
 
-      btn.innerHTML = `<div class="install-loading"></div>`;
-      btn.disabled = true;
+/* =========================
 
-      if(navigator.vibrate){
-        navigator.vibrate([30,50,30]);
-      }
+CLOSE
 
-      deferredPrompt.prompt();
+========================= */
 
-      const choice = await deferredPrompt.userChoice;
+closeInstall.addEventListener(
 
-      if(choice.outcome === "accepted"){
+'click',
 
-        btn.innerHTML = "Installed ✅";
+()=>{
 
-        setTimeout(()=>{
-          closeInstallBanner();
-        },1200);
+  installCard.style.display='none';
 
-      }else{
-
-        btn.innerHTML = "Install";
-
-        btn.disabled = false;
-      }
-
-      deferredPrompt = null;
-    };
-
-  // close
-  document
-    .getElementById("laterBtn")
-    .onclick = () => {
-      closeInstallBanner();
-    };
-}
-
-function closeInstallBanner(){
-
-  const banner = document.querySelector(".pwa-install");
-
-  if(!banner) return;
-
-  banner.classList.add("hide");
-
-  setTimeout(()=>{
-    banner.remove();
-  },400);
-}
+});
 </script>
 
 </body>
