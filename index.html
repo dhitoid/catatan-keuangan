@@ -875,6 +875,146 @@ svg {
   margin-top:10px;
   font-size:12px;
 }
+
+/* ========================= */
+/* PWA INSTALL UI PREMIUM */
+/* ========================= */
+
+.pwa-install{
+  position:fixed;
+  left:16px;
+  right:16px;
+  bottom:-200px;
+  z-index:99999;
+
+  background:rgba(15,23,42,0.88);
+  backdrop-filter:blur(25px);
+
+  border:1px solid rgba(255,255,255,0.08);
+
+  border-radius:28px;
+
+  padding:18px;
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  transition:all .45s cubic-bezier(.22,.61,.36,1);
+
+  overflow:hidden;
+}
+
+.pwa-install.show{
+  bottom:20px;
+}
+
+.pwa-install::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255,255,255,0.08) 40%,
+      transparent 60%
+    );
+
+  transform:translateX(-100%);
+  animation:shimmer 3s infinite;
+}
+
+@keyframes shimmer{
+  100%{
+    transform:translateX(200%);
+  }
+}
+
+.pwa-icon{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  overflow:hidden;
+  flex-shrink:0;
+
+  box-shadow:0 8px 20px rgba(0,0,0,0.35);
+}
+
+.pwa-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.pwa-content{
+  flex:1;
+  color:white;
+}
+
+.pwa-title{
+  font-size:15px;
+  font-weight:700;
+}
+
+.pwa-sub{
+  font-size:12px;
+  opacity:.7;
+  margin-top:3px;
+}
+
+.pwa-actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.pwa-btn{
+  border:none;
+  border-radius:14px;
+  padding:10px 14px;
+
+  font-size:13px;
+  font-weight:600;
+
+  cursor:pointer;
+}
+
+.pwa-btn.install{
+  background:linear-gradient(135deg,#1d9bf0,#0f5ea8);
+  color:white;
+}
+
+.pwa-btn.later{
+  background:rgba(255,255,255,0.08);
+  color:white;
+}
+
+.pwa-install.hide{
+  opacity:0;
+  transform:translateY(40px);
+}
+
+.install-loading{
+  width:18px;
+  height:18px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  margin:auto;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
 </style>
 </head>
 
@@ -3650,59 +3790,122 @@ renderIcons();
 </script>
 
 <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("./sw.js")
-      .then(() => {
-        console.log("PWA aktif 🔥");
-      })
-      .catch(err => {
-        console.log("SW gagal:", err);
-      });
-  });
-}
-
-const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-
-if (isIos && !window.navigator.standalone) {
-  setTimeout(() => {
-    alert("Install aplikasi:\nTap Share → Add to Home Screen");
-  }, 3000);
-}
-
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
+
   e.preventDefault();
 
   deferredPrompt = e;
 
-  // bikin tombol install custom
-  const btn = document.createElement("button");
-
-  btn.innerText = "Install App";
-  btn.style.position = "fixed";
-  btn.style.bottom = "100px";
-  btn.style.left = "20px";
-  btn.style.right = "20px";
-  btn.style.zIndex = "99999";
-
-  document.body.appendChild(btn);
-
-  btn.addEventListener("click", async () => {
-    deferredPrompt.prompt();
-
-    const choice = await deferredPrompt.userChoice;
-
-    if(choice.outcome === "accepted"){
-      console.log("User install app");
-    }
-
-    deferredPrompt = null;
-    btn.remove();
-  });
+  showInstallBanner();
 });
+
+function showInstallBanner(){
+
+  // prevent duplicate
+  if(document.querySelector(".pwa-install")) return;
+
+  const banner = document.createElement("div");
+
+  banner.className = "pwa-install";
+
+  banner.innerHTML = `
+  
+  <div class="pwa-icon">
+    <img src="icons/icon-192.png">
+  </div>
+
+  <div class="pwa-content">
+    
+    <div class="pwa-title">
+      Install MyFinance DT
+    </div>
+
+    <div class="pwa-sub">
+      Akses cepat seperti mobile banking app
+    </div>
+
+    <div class="pwa-actions">
+      <button class="pwa-btn install" id="installPwaBtn">
+        Install
+      </button>
+
+      <button class="pwa-btn later" id="laterBtn">
+        Nanti
+      </button>
+    </div>
+
+  </div>
+  `;
+
+  document.body.appendChild(banner);
+
+  setTimeout(()=>{
+    banner.classList.add("show");
+  },100);
+
+  // haptic
+  if(navigator.vibrate){
+    navigator.vibrate(40);
+  }
+
+  // install
+  document
+    .getElementById("installPwaBtn")
+    .onclick = async () => {
+
+      const btn = document.getElementById("installPwaBtn");
+
+      btn.innerHTML = `<div class="install-loading"></div>`;
+      btn.disabled = true;
+
+      if(navigator.vibrate){
+        navigator.vibrate([30,50,30]);
+      }
+
+      deferredPrompt.prompt();
+
+      const choice = await deferredPrompt.userChoice;
+
+      if(choice.outcome === "accepted"){
+
+        btn.innerHTML = "Installed ✅";
+
+        setTimeout(()=>{
+          closeInstallBanner();
+        },1200);
+
+      }else{
+
+        btn.innerHTML = "Install";
+
+        btn.disabled = false;
+      }
+
+      deferredPrompt = null;
+    };
+
+  // close
+  document
+    .getElementById("laterBtn")
+    .onclick = () => {
+      closeInstallBanner();
+    };
+}
+
+function closeInstallBanner(){
+
+  const banner = document.querySelector(".pwa-install");
+
+  if(!banner) return;
+
+  banner.classList.add("hide");
+
+  setTimeout(()=>{
+    banner.remove();
+  },400);
+}
 </script>
 
 </body>
