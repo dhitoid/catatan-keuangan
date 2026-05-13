@@ -15,6 +15,21 @@
 <title>MyFinance DT Pro</title>
 <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet"/>
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#0f5ea8">
+<meta name="background-color" content="#eaf1f7">
+
+<!-- iPhone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyFinance DT">
+
+<!-- ICON -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+
 <style>
 html, body {
   max-width: 100%;
@@ -3632,6 +3647,62 @@ document.addEventListener("input", function(e){
 checkMonthlyBudgetReset();
 render();
 renderIcons();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then(() => {
+        console.log("PWA aktif 🔥");
+      })
+      .catch(err => {
+        console.log("SW gagal:", err);
+      });
+  });
+}
+
+const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+if (isIos && !window.navigator.standalone) {
+  setTimeout(() => {
+    alert("Install aplikasi:\nTap Share → Add to Home Screen");
+  }, 3000);
+}
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+
+  deferredPrompt = e;
+
+  // bikin tombol install custom
+  const btn = document.createElement("button");
+
+  btn.innerText = "Install App";
+  btn.style.position = "fixed";
+  btn.style.bottom = "100px";
+  btn.style.left = "20px";
+  btn.style.right = "20px";
+  btn.style.zIndex = "99999";
+
+  document.body.appendChild(btn);
+
+  btn.addEventListener("click", async () => {
+    deferredPrompt.prompt();
+
+    const choice = await deferredPrompt.userChoice;
+
+    if(choice.outcome === "accepted"){
+      console.log("User install app");
+    }
+
+    deferredPrompt = null;
+    btn.remove();
+  });
+});
 </script>
 
 </body>
